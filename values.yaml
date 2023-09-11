@@ -1,0 +1,278 @@
+---
+version: "1.8.0"
+
+clusterName: "cluster.local"
+
+autoscaler: true
+
+# By default, this is points at the docker hub artifacts
+registry:
+  opthub: "azul"
+  dockerhubMirror: ""
+
+imagePullPolicy: "IfNotPresent"
+
+simpleSizing:
+  # Total number of vCores that will be allocated to the CNC service.
+  # The sizing formula in the templates will allocate individual
+  # CNC infrastructure components to best utilize given resources.
+  # The default number is the amount of vCores necessary to start
+  # one replica of each CNC component, so that the service is operational.
+  vCores: 32
+  # minVCores and maxVCores has the same formula as vCores, but applied
+  # when autoscaling is enabled.
+  minVCores: 32
+  # Default max is to allocate 10 compile brokers.
+  maxVCores: 106
+
+  # Do not change these values unless you change the required CNC pod sizing.
+  relationships:
+    brokersPerGateway: 4
+    brokersPerCache: 100
+
+secrets:
+  db:
+    username: "username"
+    password: "password"
+  builtinStorage:
+    accesskey: "minio"
+    secretkey: "minio123"
+  azure:
+    blobStorage:
+      # For authMethod: connection-string, get connection-string on Azure Portal > Storage accounts > {storage_account_name} > Access keys
+      #connectionString: "<connection-string>"
+
+      # For authMethod: sas-token, Get sas-token on Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
+      #sasToken: "<sas-token>"
+
+ssl:
+  enabled: false
+  value:
+    cert: ""
+    key: ""
+  path:
+    cert: "cert.pem"
+    key: "key.pem"
+  secretName: ""
+  mtls:
+    enabled: false
+    truststore: "client-truststore.p12"
+    password: "pass"
+
+compilations:
+  parallelism:
+    # Maximum concurrent compilation limit per VM (VMs will not send more than this amount at the same time).
+    limitPerVm: 500
+    # Maximum amount of parallel compiler engine processes running at the same time per compile broker.
+    limitPerCompileBroker: 30
+    lookupParallelism: 120 # calculated as limitPerCompileBroker * 4
+
+readyNowOrchestrator:
+  debugInfoHistoryLength: 100
+  completedAfter: "PT24H"
+  completionGracePeriod: "PT180S"
+  cache:
+    enabled: true
+    maxSizeBytes: 500000000
+  producers:
+    maxConcurrentRecordings: 5
+    maxPromotableGeneration: 3
+    maxProfileSize: 0
+  cleaner:
+    enabled: true
+    externalPersistentStorageSoftLimit: "10Gi" # use with s3 or azure-blob storage services
+    targetSize: 0 # use only to override auto-settings
+    warningSize: 0 # use only to override auto-settings
+    keepUnrequestedProfileNamesFor: 0
+
+storage:
+  blobStorageService: builtin-storage # available options: builtin-storage, azure-blob, s3
+  azureBlob:
+    endpoint: https://<yourendpoint>.blob.core.windows.net
+    authMethod: default-credentials # available options: sas-token, connection-string, default-credentials
+    # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to storage container below
+    container: <your-container>
+  s3:
+    # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to bucket below
+    commonBucket: <your-bucket>
+
+#################################################################################
+# The rest of the settings are only to show you the values used internally.     #
+# Changing the values below will not have any affect on your CNC cluster.       #
+#################################################################################
+builtinStorage:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "1"
+      memory: "24Gi"
+      ephemeral-storage: "32Gi"
+    limits:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "1"
+      memory: "24Gi"
+      ephemeral-storage: "200Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  # when using persistent data volume make sure to lower ephemeral-storage allocation
+  persistentDataVolume:
+    enabled: false
+    size: "200Gi"
+    storageClassName: "" # empty string uses default storage class
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+gateway:
+  replicas: 1
+  autoscaler:
+    enabled: true
+    mode: operator
+    min: 1
+    max: 10
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "14Gi"
+      ephemeral-storage: "1Gi"
+    limits:
+      cpu: "7"
+      memory: "14Gi"
+      ephemeral-storage: "1Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  service:
+    type: "NodePort"
+    httpEndpoint:
+      enabled: false
+      port: 8080
+    grpc:
+      port: 50051
+    # annotations: {}
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+gwProxy:
+  enabled: true
+  replicas: 1
+  autoscaler:
+    enabled: false
+    mode: hpa
+    min: 1
+    max: 10
+  resources:
+    requests:
+      cpu: "7"
+      memory: "1Gi"
+      ephemeral-storage: "256Mi"
+    limits:
+      cpu: "7"
+      memory: "1Gi"
+      ephemeral-storage: "256Mi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+compileBroker:
+  enabled: true
+  replicas: 1
+  autoscaler:
+    enabled: true
+    min: 1
+    max: 10
+  terminationGracePeriodSeconds: 60
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "8Gi"
+    limits:
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "8Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+cache:
+  replicas: 1
+  autoscaler:
+    enabled: true
+    mode: operator
+    min: 1
+    max: 2
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+    limits:
+      cpu: "7"
+      memory: "28Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+db:
+  enabled: true
+  version: "10.5.12"
+  replicas: 1
+  schemaRecreateRegularCheck: false
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "200Gi"
+    limits:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "200Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  # when using persistent data volume make sure to lower ephemeral-storage allocation
+  persistentDataVolume:
+    enabled: false
+    size: "200Gi"
+    storageClassName: "" # empty string uses default storage class
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+
+operator:
+  timeToClearOptimizationBacklog: 120s
+  sessionBalancing:
+    enabled: true
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+      ephemeral-storage: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+      ephemeral-storage: "1Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  applicationLabels:
+    #release: "stable"
+  podTemplateLabels:
+    #environment: "dev"
+
+test: false

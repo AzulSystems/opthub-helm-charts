@@ -1,0 +1,111 @@
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infrastructure-storage-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  minio-accesskey: {{ .Values.secrets.builtinStorage.accesskey | b64enc }}
+  minio-secretkey: {{ .Values.secrets.builtinStorage.secretkey | b64enc }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cache
+    {{- if .Values.builtinStorage.applicationLabels }}
+    {{- .Values.builtinStorage.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  serviceName: storage
+  selector:
+    matchLabels:
+      app: storage
+  replicas: {{ .Values.builtinStorage.replicas }}
+  template:
+    metadata:
+      labels:
+        app: storage
+        {{- if .Values.builtinStorage.podTemplateLabels }}
+        {{- .Values.builtinStorage.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        fsGroupChangePolicy: OnRootMismatch
+        fsGroup: 101
+      containers:
+        - name: storage
+          image: {{ .Values.registry.opthub }}/opthub-storage:{{ .Values.version }}{{ .Values.builtinStorage.versionSuffix }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-storage-credentials
+                  key: minio-accesskey
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-storage-credentials
+                  key: minio-secretkey
+            - name: MINIO_CACHE_EXCLUDE
+              value: "/data/compiler-artifacts/*,compiler-artifacts/*"
+            - name: GOGC
+              value: "10"
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+{{- if .Values.builtinStorage.resources }}
+          resources: {{- .Values.builtinStorage.resources | toYaml | nindent 12 }}
+{{- end }}
+{{- if not .Values.builtinStorage.persistentDataVolume.enabled }}
+      volumes:
+        - name: data
+          emptyDir: {}
+{{- end }}
+{{- if .Values.builtinStorage.nodeSelector }}
+      nodeSelector: {{- .Values.builtinStorage.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.builtinStorage.tolerations }}
+      tolerations: {{- .Values.builtinStorage.tolerations | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.builtinStorage.persistentDataVolume.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.builtinStorage.persistentDataVolume.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.builtinStorage.persistentDataVolume.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: storage
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 9000
+  selector:
+    app: storage
+---
+
+{{- end }}

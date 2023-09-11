@@ -1,0 +1,44 @@
+{{- if .Values.profilingModel }}
+{{- if .Values.profilingModel.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profiling-model
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: profiling-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: profiling-model
+  template:
+    metadata:
+      labels:
+        app: profiling-model
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8120"
+        prometheus.io/path: "/q/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: profiling-model
+          image: {{ .Values.registry.opthub }}/opthub-profiling-model:{{ .Values.version }}{{ .Values.profilingModel.versionSuffix }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args:
+            - -Dquarkus.hazelcast-client.cluster-members=hazelcast:5701
+          {{- if .Values.profilingModel.resources }}
+          resources: {{- .Values.profilingModel.resources | toYaml | nindent 12 }}
+          {{- end }}
+{{- if .Values.profilingModel.nodeSelector }}
+      nodeSelector: {{- .Values.profilingModel.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.profilingModel.tolerations }}
+      tolerations: {{- .Values.profilingModel.tolerations | toYaml | nindent 8 }}
+{{- end }}
+{{- end }}
+{{- end }}

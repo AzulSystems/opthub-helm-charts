@@ -1,0 +1,46 @@
+---
+###################################################################################################
+# The rest of the settings are for reference only. You should not override any of these settings. #
+###################################################################################################
+
+simpleSizing:
+  disabled: true
+
+autoscaler: false
+
+builtinStorage:
+  resources:
+    requests:
+      cpu:
+      memory:
+      ephemeral-storage: "1Gi"
+    limits:
+      cpu:
+      memory:
+      ephemeral-storage: "1Gi"
+
+gateway:
+  resources:
+
+gwProxy:
+  resources:
+
+compileBroker:
+  resources:
+
+cache:
+  resources:
+
+db:
+  resources:
+    requests:
+      cpu:
+      memory:
+      ephemeral-storage: "7Gi"
+    limits:
+      cpu:
+      memory:
+      ephemeral-storage: "7Gi"
+
+operator:
+  resources:

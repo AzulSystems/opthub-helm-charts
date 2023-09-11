@@ -1,0 +1,253 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cache
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cache
+    {{- if .Values.cache.applicationLabels }}
+    {{- .Values.cache.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ include "sizing.cache.replicas" . }}
+  podManagementPolicy: Parallel
+  serviceName: cache
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+        {{- if .Values.cache.podTemplateLabels }}
+        {{- .Values.cache.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/q/metrics"
+        prometheus.io/port: "8070"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: cache
+        image: {{ .Values.registry.opthub }}/opthub-hazelcast:{{ .Values.version }}{{ .Values.cache.versionSuffix }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        ports:
+        - containerPort: 5701
+          name: ch-server
+        - containerPort: 8070
+          name: metrics
+        env:
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: s3
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-storage-credentials
+                key: minio-accesskey
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-storage-credentials
+                key: minio-secretkey
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
+            value: static
+
+{{- else if eq "s3" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: s3
+          - name: engine.storage-location.bucket
+            value: {{ .Values.storage.s3.commonBucket }}
+          - name: engine.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/compiler-engines/
+          - name: readynoworchestrator.storage-location.bucket
+            value: {{ .Values.storage.s3.commonBucket }}
+          - name: readynoworchestrator.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/persistent-profile/
+
+{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: azure-blob
+          - name: blob-storage.azure-blob.endpoint
+            value: {{ .Values.storage.azureBlob.endpoint }}
+          - name: blob-storage.azure-blob.authMethod
+            value: {{ .Values.storage.azureBlob.authMethod }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
+          - name: blob-storage.azure-blob.sasToken
+            valueFrom:
+              secretKeyRef:
+                name: azure-storage-credentials
+                key: azure-storage-sas-token
+  {{- end }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
+          - name: blob-storage.azure-blob.connectionString
+            valueFrom:
+              secretKeyRef:
+                name: azure-storage-credentials
+                key: azure-storage-connection-string
+  {{- end  }}
+          - name: engine.storage-location.bucket
+            value: {{ .Values.storage.azureBlob.container }}
+          - name: engine.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/compiler-engines/
+          - name: readynoworchestrator.storage-location.bucket
+            value: {{ .Values.storage.azureBlob.container }}
+          - name: readynoworchestrator.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/persistent-profile/
+{{- end  }}
+{{- if eq true .Values.db.enabled }}
+          - name: QUARKUS_DATASOURCE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-credentials
+                key: mariadb-username
+          - name: QUARKUS_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-credentials
+                key: mariadb-password
+{{- end }}
+        args:
+          - "-XX:InitialRAMPercentage=80"
+          - "-XX:MaxRAMPercentage=80"
+          - "-XX:+ExitOnOutOfMemoryError"
+          - "-XX:-OmitStackTraceInFastThrow"
+          - "-Dhazelcast.kubernetes.enabled=true"
+          - "-Dhazelcast.kubernetes.namespace={{ .Release.Namespace }}"
+          - "-Dhazelcast.kubernetes.service-name=cache"
+          - "-Dhz.jet.enabled=true"
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+          - "-Dquarkus.s3.endpoint-override=http://storage:9000"
+{{- end  }}
+{{- if .Values.db.schemaRecreateRegularCheck }}
+          - "-Ddbschema.auto-recreate.enabled=true"
+{{- end }}
+{{- if eq true .Values.db.enabled }}
+          - "-Dquarkus.datasource.jdbc.url=jdbc:mariadb://db:3306/azul?useBulkStmt=true&rewriteBatchedStatements=true"
+{{- else }}
+          - "-Dquarkus.datasource.jdbc.url=dummy-value"
+          - "-Dquarkus.flyway.migrate-at-start=false"
+{{- end }}
+          - "-Dquarkus.datasource.jdbc.max-size=100"
+          - "-Dhazelcast.shutdownhook.policy=GRACEFUL"
+          - "-Dhazelcast.shutdownhook.enabled=true"
+          - "-Dhazelcast.graceful.shutdown.max.wait=300"
+          - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
+{{- if .Values.cache.extraArguments }}
+          {{- .Values.cache.extraArguments | toYaml | nindent 10 }}
+{{- end }}
+{{- if .Values.cache.extraArgumentsMap }}
+    {{- range $key, $val := .Values.cache.extraArgumentsMap }}
+          - -D{{ $key }}={{ $val }}
+    {{- end }}
+{{- end }}
+        {{- if .Values.cache.resources }}
+        resources: {{- .Values.cache.resources | toYaml | nindent 10 }}
+        {{- end }}
+      terminationGracePeriodSeconds: 300
+      serviceAccountName: opthub-cache
+{{- if .Values.cache.nodeSelector }}
+      nodeSelector: {{- .Values.cache.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.cache.tolerations }}
+      tolerations: {{- .Values.cache.tolerations | toYaml | nindent 8 }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cache
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: cache
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 5701
+      protocol: TCP
+      name: cache-server
+  selector:
+    app: cache
+
+{{- if and .Values.autoscaler .Values.cache.autoscaler.enabled}}
+{{- if eq "hpa" .Values.cache.autoscaler.mode}}
+---
+# Dependence on metric-server
+{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
+apiVersion: autoscaling/v2
+{{- else }}
+apiVersion: autoscaling/v2beta2
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cache
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: cache
+  minReplicas: {{ include "sizing.cache.minReplicas" . }}
+  maxReplicas: {{ include "sizing.cache.maxReplicas" . }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 120
+
+{{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opthub-cache
+  namespace: {{ .Release.Namespace }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: opthub-cache-role
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+      - pods
+      - services
+    verbs:
+      - get
+      - list
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: opthub-cache-role-binding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: opthub-cache-role
+subjects:
+  - kind: ServiceAccount
+    name: opthub-cache
+    namespace: {{ .Release.Namespace }}

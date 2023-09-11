@@ -1,0 +1,390 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infrastructure-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  mariadb-password: {{ .Values.secrets.db.password | b64enc }}
+  mariadb-username: {{ .Values.secrets.db.username | b64enc }}
+---
+{{- if eq true .Values.db.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: db
+    {{- if .Values.db.applicationLabels }}
+    {{- .Values.db.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.db.replicas }}
+  serviceName: db
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+        {{- if .Values.db.podTemplateLabels }}
+        {{- .Values.db.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroupChangePolicy: OnRootMismatch
+        fsGroup: 999
+      containers:
+      - name: db
+        image: {{ .Values.registry.dockerhubMirror }}library/mariadb:{{ .Values.db.version }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+          - name: "MYSQL_DATABASE"
+            value: "azul"
+          - name: "MARIADB_USER"
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-credentials
+                key: mariadb-username
+          - name: "MARIADB_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-credentials
+                key: mariadb-password
+          - name: "MARIADB_ALLOW_EMPTY_ROOT_PASSWORD"
+            value: "true"
+        args:
+          - "--innodb_data_file_path=azuldb:{{ div (include "_getDatabaseSizeInB" .) 1_048_576 }}M"
+          - "--innodb_file_per_table=OFF"
+          - "--innodb-defragment=1"
+          - "--max_allowed_packet=256M"
+          - "--max_connections=6000"
+          - "--event-scheduler=ON"
+          - "--query_cache_type=1"
+          - "--query_cache_limit=10485760"
+          - "--query_cache_size=1048576000"
+        ports:
+          - containerPort: 3306
+{{- if .Values.db.resources }}
+        resources: {{- .Values.db.resources | toYaml | nindent 10 }}
+{{- end }}
+{{- if .Values.db.persistentDataVolume.enabled }}
+        volumeMounts:
+          - name: data
+            mountPath: "/var/lib/mysql"
+{{- end }}
+{{- if .Values.db.nodeSelector }}
+      nodeSelector: {{- .Values.db.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.db.tolerations }}
+      tolerations: {{- .Values.db.tolerations | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.db.persistentDataVolume.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.db.persistentDataVolume.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.db.persistentDataVolume.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: db
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 3306
+      protocol: TCP
+      name: db-server
+  selector:
+    app: db
+{{- end }}
+
+{{- if and .Values.ssl.enabled (eq "" .Values.ssl.secretName) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gateway-ssl-secret
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  cert.pem: |-
+{{- if .Values.ssl.value.cert }}
+    {{ .Values.ssl.value.cert | b64enc }}
+{{- else }}
+    {{ .Files.Get (printf "%s" .Values.ssl.path.cert) | b64enc }}
+{{- end }}
+  key.pem: |-
+{{- if .Values.ssl.value.key }}
+    {{ .Values.ssl.value.key | b64enc }}
+{{- else }}
+    {{ .Files.Get (printf "%s" .Values.ssl.path.key) | b64enc }}
+{{- end }}
+{{- if .Values.ssl.mtls.enabled }}
+  client-truststore.p12: |-
+    {{ .Files.Get (printf "%s" .Values.ssl.mtls.truststore) | b64enc }}
+{{- end }}
+{{- end }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: gateway
+    {{- if .Values.gateway.applicationLabels }}
+    {{- .Values.gateway.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ include "sizing.gateway.replicas" . }}
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+        {{- if .Values.gateway.podTemplateLabels }}
+        {{- .Values.gateway.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/q/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: gateway
+        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ .Values.version }}{{ .Values.gateway.versionSuffix }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: s3
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-storage-credentials
+                key: minio-accesskey
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: infrastructure-storage-credentials
+                key: minio-secretkey
+          - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
+            value: static
+
+{{- else if eq "s3" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: s3
+          - name: engine.storage-location.bucket
+            value: {{ .Values.storage.s3.commonBucket }}
+          - name: engine.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/compiler-engines/
+          - name: readynoworchestrator.storage-location.bucket
+            value: {{ .Values.storage.s3.commonBucket }}
+          - name: readynoworchestrator.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/persistent-profile/
+
+{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
+          - name: blob-storage.storage-service
+            value: azure-blob
+          - name: blob-storage.azure-blob.endpoint
+            value: {{ .Values.storage.azureBlob.endpoint }}
+          - name: blob-storage.azure-blob.authMethod
+            value: {{ .Values.storage.azureBlob.authMethod }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
+          - name: blob-storage.azure-blob.sasToken
+            valueFrom:
+              secretKeyRef:
+                name: azure-storage-credentials
+                key: azure-storage-sas-token
+  {{- end  }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
+          - name: blob-storage.azure-blob.connectionString
+            valueFrom:
+              secretKeyRef:
+                name: azure-storage-credentials
+                key: azure-storage-connection-string
+  {{- end  }}
+          - name: engine.storage-location.bucket
+            value: {{ .Values.storage.azureBlob.container }}
+          - name: engine.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/compiler-engines/
+          - name: readynoworchestrator.storage-location.bucket
+            value: {{ .Values.storage.azureBlob.container }}
+          - name: readynoworchestrator.storage-location.path-prefix
+            value: {{ .Release.Namespace }}/persistent-profile/
+{{- end  }}
+          - name: SERVER_ADDRESS
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: QUARKUS_S3_CLOUD_REGION
+            value: us-west-2
+        args:
+        - "-XX:+ExitOnOutOfMemoryError"
+        - "-XX:MaxRAMPercentage=80"
+        - "-XX:-OmitStackTraceInFastThrow"
+        - "-Dvm.session-statistics.log.client-continuously-blocked-threshold={{ .Values.operator.timeToClearOptimizationBacklog}}"
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+        - "-Dquarkus.s3.endpoint-override=http://storage:9000"
+{{- end  }}
+        - "-Dcompilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}"
+        - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
+        - "-Dreadynoworchestrator.debug-info-history-length={{ .Values.readyNowOrchestrator.debugInfoHistoryLength }}"
+        - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
+        - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
+        - "-Dreadynoworchestrator.cache.enabled={{ .Values.readyNowOrchestrator.cache.enabled }}"
+        - "-Dreadynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes | int64 }}"
+        - "-Dreadynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}"
+        - "-Dreadynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
+        - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
+        - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
+        - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
+        - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
+        - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+  {{- if .Values.gateway.resources }}
+        - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
+{{- end}}
+{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
+        - "-Dquarkus.grpc.server.ssl.certificate=/opt/ssl/cert.pem"
+        - "-Dquarkus.grpc.server.ssl.key=/opt/ssl/key.pem"
+{{- if .Values.ssl.mtls.enabled }}
+        - "-Dquarkus.grpc.server.ssl.client-auth=required"
+        - "-Dquarkus.grpc.server.ssl.trust-store=/opt/ssl/client-truststore.p12"
+        - "-Dquarkus.grpc.server.ssl.trust-store-password={{ .Values.ssl.mtls.password }}"
+{{- end }}
+{{- end }}
+{{- if .Values.gateway.extraArguments }}
+        {{- .Values.gateway.extraArguments | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.gateway.extraArgumentsMap }}
+    {{- range $key, $val := .Values.gateway.extraArgumentsMap }}
+        - -D{{ $key }}={{ $val }}
+    {{- end }}
+{{- end }}
+        ports:
+        - containerPort: 8080
+          name: http-endpoint
+        - containerPort: 50051
+          name: grpc-external
+{{- if .Values.gateway.resources }}
+        resources: {{- .Values.gateway.resources | toYaml | nindent 10 }}
+{{- end }}
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: http-endpoint
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: http-endpoint
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        volumeMounts:
+{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
+          - mountPath: "/opt/ssl"
+            name: ssl-cert
+            readOnly: true
+{{- end }}
+      volumes:
+{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
+        - name: ssl-cert
+          secret:
+            secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
+{{- end }}
+{{- if .Values.gateway.nodeSelector }}
+      nodeSelector: {{- .Values.gateway.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.gateway.tolerations }}
+      tolerations: {{- .Values.gateway.tolerations | toYaml | nindent 8 }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: gateway
+{{- if .Values.gateway.service.annotations }}
+  annotations: {{- .Values.gateway.service.annotations | toYaml | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.gateway.service.type }}
+  ports:
+{{- if .Values.gateway.service.httpEndpoint.enabled }}
+    - port: {{ .Values.gateway.service.httpEndpoint.port }}
+      protocol: TCP
+      name: http-server
+      targetPort: 8080
+{{- end }}
+    - name: grpc-server
+      protocol: TCP
+      port: {{ .Values.gateway.service.grpc.port }}
+      targetPort: 50051
+{{- if  .Values.gwProxy.enabled }}
+  selector:
+    app: gw-proxy
+  type: LoadBalancer
+{{- else }}
+  selector:
+    app: gateway
+{{- end }}
+
+{{- if and .Values.autoscaler .Values.gateway.autoscaler.enabled}}
+{{- if eq "hpa" .Values.gateway.autoscaler.mode}}
+---
+# Dependence on metric-server
+{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
+apiVersion: autoscaling/v2
+{{- else }}
+apiVersion: autoscaling/v2beta2
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gateway
+  minReplicas: {{ include "sizing.gateway.minReplicas" . }}
+  maxReplicas: {{ include "sizing.gateway.maxReplicas" . }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+{{- end }}
+{{- end }}

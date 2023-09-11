@@ -1,0 +1,55 @@
+{{ if .Values.test }}
+# Regular helm tests are meant to test the deployment itself.
+# This file is meant to evaluate and test the formulas in the templates.
+# To use this file, change value of "test" to true and run:
+# helm template test . | grep "^#TEST"
+
+#DEBUG cache replicas: {{ include "sizing.cache.replicas" .}}
+#DEBUG gateway replicas: {{ include "sizing.gateway.replicas" .}}
+#DEBUG broker replicas: {{ include "sizing.compileBroker.replicas" .}}
+
+{{ $brokerVCores := mul (include "sizing.compileBroker.replicas" .) (include "_sizing.broker.vCores" .) }}
+{{ $cacheVCores := mul (include "sizing.cache.replicas" .) (include "_sizing.cache.vCores" .) }}
+{{ $gatewayVCores := mul (include "sizing.gateway.replicas" .) (include "_sizing.gateway.vCores" .) }}
+{{ $vCores := add $brokerVCores $cacheVCores $gatewayVCores (include "_sizing.nonScalingComponents.vCores" .) }}
+
+#DEBUG cache minReplicas: {{ include "sizing.cache.minReplicas" .}}
+#DEBUG gateway minReplicas: {{ include "sizing.gateway.minReplicas" .}}
+#DEBUG broker minReplicas: {{ include "sizing.compileBroker.minReplicas" .}}
+
+{{ $brokerMinVCores := mul (include "sizing.compileBroker.minReplicas" .) (include "_sizing.broker.vCores" .) }}
+{{ $cacheMinVCores := mul (include "sizing.cache.minReplicas" .) (include "_sizing.cache.vCores" .) }}
+{{ $gatewayMinVCores := mul (include "sizing.gateway.minReplicas" .) (include "_sizing.gateway.vCores" .) }}
+{{ $minVCores := add $brokerMinVCores $cacheMinVCores $gatewayMinVCores (include "_sizing.nonScalingComponents.vCores" .) }}
+
+#DEBUG cache maxReplicas: {{ include "sizing.cache.maxReplicas" .}}
+#DEBUG gateway maxReplicas: {{ include "sizing.gateway.maxReplicas" .}}
+#DEBUG broker maxReplicas: {{ include "sizing.compileBroker.maxReplicas" .}}
+
+{{ $brokerMaxVCores := mul (include "sizing.compileBroker.maxReplicas" .) (include "_sizing.broker.vCores" .) }}
+{{ $cacheMaxVCores := mul (include "sizing.cache.maxReplicas" .) (include "_sizing.cache.vCores" .) }}
+{{ $gatewayMaxVCores := mul (include "sizing.gateway.maxReplicas" .) (include "_sizing.gateway.vCores" .) }}
+{{ $maxVCores := add $brokerMaxVCores $cacheMaxVCores $gatewayMaxVCores (include "_sizing.nonScalingComponents.vCores" .) }}
+
+#DEBUG total vCores: {{ $vCores }}
+#DEBUG total minVCores: {{ $minVCores }}
+#DEBUG total maxVCores: {{ $maxVCores }}
+
+{{ if .Values.testData }}
+{{ range $test := .Values.testData }}
+{{ with $ }}
+{{ include "_runTest" (dict "Values" .Values "inputCapacity" $test.inputCapacity "expectedBrokers" $test.expectedBrokers "expectedCaches" $test.expectedCaches "expectedGateways" $test.expectedGateways ) }}
+{{ end }}
+{{ end }}
+{{ else }}
+#TEST FAIL - the testData not found!
+{{ end }}
+
+# Test for default values
+
+{{ if .Values.testDataDefaultSetup }}
+{{ include "_runTest" (dict "Values" .Values "inputCapacity" .Values.simpleSizing.maxVCores "expectedBrokers" .Values.testDataDefaultSetup.expectedBrokers "expectedCaches" .Values.testDataDefaultSetup.expectedCaches "expectedGateways" .Values.testDataDefaultSetup.expectedGateways ) }}
+{{ else }}
+#TEST FAIL - the testDataDefaultSetup not found!
+{{ end }}
+{{ end }}

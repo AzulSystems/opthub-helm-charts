@@ -1,0 +1,19 @@
+{{- define "_assert" -}}
+Result: {{ if eq (.exp | int) (.val | int) }}OK{{ else }}FAIL{{ end }}
+{{- end -}}
+
+{{- define "_runTest" -}}
+{{- $brokers := include "_calculateReplicas" (dict "Values" .Values "inputCapacity" .inputCapacity  "type" "brokers") -}}
+{{- $caches := include "_calculateReplicas" (dict "Values" .Values "inputCapacity" .inputCapacity  "type" "caches") -}}
+{{- $gateways := include "_calculateReplicas" (dict "Values" .Values "inputCapacity" .inputCapacity  "type" "gateways") -}}
+{{ $brokerVCores := mul $brokers (include "_sizing.broker.vCores" .) }}
+{{ $cacheVCores := mul $caches (include "_sizing.cache.vCores" .) }}
+{{ $gatewayVCores := mul $gateways (include "_sizing.gateway.vCores" .) }}
+{{ $vCores := add $brokerVCores $cacheVCores $gatewayVCores (include "_sizing.nonScalingComponents.vCores" .) }}
+#TEST ----------------
+#TEST: input capacity: {{ .inputCapacity }}
+#TEST: remaining capacity: {{ $vCores }}
+#TEST: Compile brokers: {{ $brokers }} Expected: {{ .expectedBrokers }} {{include "_assert" (dict "exp" .expectedBrokers "val" $brokers)}}
+#TEST: Caches: {{ $caches }} Expected: {{ .expectedCaches }} {{include "_assert" (dict "exp" .expectedCaches "val" $caches)}}
+#TEST: Gateways: {{ $gateways }} Expected: {{ .expectedGateways }} {{include "_assert" (dict "exp" .expectedGateways "val" $gateways)}}
+{{- end -}}
