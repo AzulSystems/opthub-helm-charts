@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  azul-opthub:
+  - apiVersion: v2
+    created: "2023-09-11T13:15:04.784154967Z"
+    description: 'Azul Intelligence Cloud: Optimizer Hub'
+    digest: 5552ed6738340be6fdd8f5d2352a781235b0449065a15efa87af1a2a35e21b46
+    home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
+    icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
+    name: azul-opthub
+    urls:
+    - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.0.tgz
+    version: 1.8.0
+generated: "2023-09-11T13:15:04.779898163Z"
