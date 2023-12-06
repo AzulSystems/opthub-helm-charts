@@ -122,9 +122,6 @@ spec:
         - "-Dquarkus.datasource.jdbc.url=jdbc:mariadb://db:3306/azul?useBulkStmt=true&rewriteBatchedStatements=true&useCompression=true"
         - "-Dcompiler.parallelism={{ .Values.compilations.parallelism.limitPerCompileBroker }}"
         - "-Dcompiler.lookup-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}"
-{{- if .Values.codeCache }}
-        - "-Dcodecache.enabled={{- .Values.codeCache.enabled }}"
-{{- end }}
 {{- if .Values.compileBroker.extraArguments }}
         {{- .Values.compileBroker.extraArguments | toYaml | nindent 8 }}
 {{- end }}

@@ -159,7 +159,12 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- end -}}
 
 {{- define "_getCodecacheEvictionTargetSizeInB" -}}
+{{- $targetSizeString := .Values.codeCache.cleaner.targetSize | toString -}}
+{{- if eq $targetSizeString "0" -}}
 {{- mulf (include "_getDatabaseVolumeSpaceInB" .) 0.9 0.6 | int -}}
+{{- else -}}
+{{- .Values.codeCache.cleaner.targetSize -}}
+{{- end -}}
 {{- end -}}
 
 

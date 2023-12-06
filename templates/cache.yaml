@@ -136,6 +136,7 @@ spec:
           - "-Dhazelcast.shutdownhook.policy=GRACEFUL"
           - "-Dhazelcast.shutdownhook.enabled=true"
           - "-Dhazelcast.graceful.shutdown.max.wait=300"
+          - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
           - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
 {{- if .Values.cache.extraArguments }}
           {{- .Values.cache.extraArguments | toYaml | nindent 10 }}

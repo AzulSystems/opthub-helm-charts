@@ -1,5 +1,5 @@
 ---
-version: "1.8.0"
+version: "1.8.1"
 
 clusterName: "cluster.local"
 
@@ -95,6 +95,12 @@ storage:
   s3:
     # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to bucket below
     commonBucket: <your-bucket>
+
+codeCache:
+  cleaner:
+    enabled: true
+    targetSize: 0 # use only to override auto-settings
+
 
 #################################################################################
 # The rest of the settings are only to show you the values used internally.     #
