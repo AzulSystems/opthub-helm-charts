@@ -2,7 +2,17 @@ apiVersion: v1
 entries:
   azul-opthub:
   - apiVersion: v2
-    created: "2023-12-06T15:26:28.885096526Z"
+    created: "2023-12-19T08:46:58.353100762Z"
+    description: 'Azul Intelligence Cloud: Optimizer Hub'
+    digest: 54db68b7a92e2777158df77ffa2eb3c0e7d76a3845835f93ea511cb813009982
+    home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
+    icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
+    name: azul-opthub
+    urls:
+    - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.2.tgz
+    version: 1.8.2
+  - apiVersion: v2
+    created: "2023-12-19T08:46:58.351078026Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: a72533d3ffdcc4f86a9ad37cd9497908e27c8d774de1966d1183e803b3eedb3f
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -12,7 +22,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.1.tgz
     version: 1.8.1
   - apiVersion: v2
-    created: "2023-12-06T15:26:28.88233616Z"
+    created: "2023-12-19T08:46:58.349091686Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 5552ed6738340be6fdd8f5d2352a781235b0449065a15efa87af1a2a35e21b46
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -21,4 +31,4 @@ entries:
     urls:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.0.tgz
     version: 1.8.0
-generated: "2023-12-06T15:26:28.87654456Z"
+generated: "2023-12-19T08:46:58.346998151Z"
