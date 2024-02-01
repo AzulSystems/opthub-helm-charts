@@ -1,5 +1,5 @@
 ---
-version: "1.8.2"
+version: "1.9.0"
 
 clusterName: "cluster.local"
 
@@ -77,13 +77,33 @@ readyNowOrchestrator:
   producers:
     maxConcurrentRecordings: 5
     maxPromotableGeneration: 3
+    maxSynchronizedGeneration: 2
     maxProfileSize: 0
+  promotion:
+    minProfileSize: 1000000
+    minProfileDuration: "PT2M"
+    minProfileSizePerGeneration: "0:1000000,1:10000000,2:25000000,3:50000000"
+    minProfileDurationPerGeneration: "0:PT2M,1:PT15M,2:PT30M,3:PT60M"
   cleaner:
     enabled: true
     externalPersistentStorageSoftLimit: "10Gi" # use with s3 or azure-blob storage services
     targetSize: 0 # use only to override auto-settings
     warningSize: 0 # use only to override auto-settings
     keepUnrequestedProfileNamesFor: 0
+
+codeCache:
+  cleaner:
+    enabled: true
+    targetSize: 0 # use only to override auto-settings
+  storageType: sqldb # use sqldb|blobstore
+  storage:
+    offloadReadOperations: false
+
+synchronization:
+  enabled: true
+  peers: ""  # comma separated list of URLs pointing to REST API of other peers e.g. https://rno.cluster1:8080/,https://rno.cluster2:8080/
+  initialDelay: "PT180s"
+  period: "PT30s"
 
 storage:
   blobStorageService: builtin-storage # available options: builtin-storage, azure-blob, s3
@@ -95,12 +115,6 @@ storage:
   s3:
     # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to bucket below
     commonBucket: <your-bucket>
-
-codeCache:
-  cleaner:
-    enabled: true
-    targetSize: 0 # use only to override auto-settings
-
 
 #################################################################################
 # The rest of the settings are only to show you the values used internally.     #
@@ -174,11 +188,11 @@ gwProxy:
     requests:
       cpu: "7"
       memory: "1Gi"
-      ephemeral-storage: "256Mi"
+      ephemeral-storage: "1Gi"
     limits:
       cpu: "7"
       memory: "1Gi"
-      ephemeral-storage: "256Mi"
+      ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
   applicationLabels: # Additional labels for Deployment/StatefulSet
@@ -280,5 +294,22 @@ operator:
     #release: "stable"
   podTemplateLabels:
     #environment: "dev"
+
+mgmtGateway:
+  enabled: false
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "2"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+  service:
+    type: "LoadBalancer"
+    httpEndpoint:
+      port: 8080
+  nodeSelector:
+    kubernetes.io/arch: amd64
 
 test: false

@@ -196,3 +196,52 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- $targetSize -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Helpers below are introduced to calculate RNO per-generation properies. Helpers implementation
+has hardcoded some defaults that should match the corresponding values at
+readyNowOrchestrator.promotion.
+*/}}
+
+{{/* Derives MinProfileSizePerGeneration value */}}
+{{- define "_getPromotionMinProfileSizePerGeneration" -}}
+{{- $defaultMinSize := 1000000 | int64 -}}
+{{- $defaultMinSizePerGeneration := print "0:" $defaultMinSize -}}
+{{- $actualMinSize := .minProfileSize | int64 -}}
+{{- $actualMinSizePerGeneration := .minProfileSizePerGeneration -}}
+{{/*
+  In case minProfileSize doesn't equal to the default, but minProfileSizePerGeneration is still equal to its
+  default value, set changed minProfileSize for all generations. 
+*/}}
+{{- if and (ne $defaultMinSize $actualMinSize) (eq $defaultMinSizePerGeneration $actualMinSizePerGeneration) -}}
+{{- print "0:" $actualMinSize -}}
+{{- else -}}
+{{- $actualMinSizePerGeneration -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Derives MinProfileDurationPerGeneration value */}}
+{{- define "_getPromotionMinProfileDurationPerGeneration" -}}
+{{- $defaultMinDuration := "PT2M" -}}
+{{- $defaultMinDurationPerGeneration := print "0:" $defaultMinDuration -}}
+{{- $actualMinDuration := .minProfileDuration -}}
+{{- $actualMinDurationPerGeneration := .minProfileDurationPerGeneration -}}
+{{/* Similar logic used in "_getPromotionMinProfileSizePerGeneration" function */}}
+{{- if and (ne $defaultMinDuration $actualMinDuration) (eq $defaultMinDurationPerGeneration $actualMinDurationPerGeneration) -}}
+{{- print "0:" $actualMinDuration -}}
+{{- else -}}
+{{- $actualMinDurationPerGeneration -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "getPromotionMinProfileSizePerGeneration" -}}
+{{- $inputMinProfileSize := .Values.readyNowOrchestrator.promotion.minProfileSize | int64 -}}
+{{- $inputMinProfileSizePerGeneration := .Values.readyNowOrchestrator.promotion.minProfileSizePerGeneration -}}
+{{ include "_getPromotionMinProfileSizePerGeneration" (dict "minProfileSize" $inputMinProfileSize "minProfileSizePerGeneration" $inputMinProfileSizePerGeneration) }}
+{{- end -}}
+
+{{- define "getPromotionMinProfileDurationPerGeneration" -}}
+{{- $inputMinProfileDuration := .Values.readyNowOrchestrator.promotion.minProfileDuration -}}
+{{- $inputMinProfileDurationPerGeneration := .Values.readyNowOrchestrator.promotion.minProfileDurationPerGeneration -}}
+{{ include "_getPromotionMinProfileDurationPerGeneration" (dict "minProfileDuration" $inputMinProfileDuration "minProfileDurationPerGeneration" $inputMinProfileDurationPerGeneration) }}
+{{- end -}}

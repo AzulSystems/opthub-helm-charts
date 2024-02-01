@@ -269,8 +269,11 @@ spec:
         runAsNonRoot: true
       containers:
         - name: gw-proxy
-          image: envoyproxy/envoy:distroless-v1.26-latest
+          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.28-latest
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if .Values.gwProxy.command }}
+          command: {{- .Values.gwProxy.command | toYaml | nindent 10 }}
+          {{- end }}
           args:
             - "-c /etc/envoy/envoy.yaml"
             - "-l warn"
@@ -304,10 +307,21 @@ spec:
           secret:
             secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
 {{- end }}
-{{- if .Values.gwProxy.nodeSelector }}
+{{- if eq true .Values.gwProxy.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.gwProxy.nodeSelector }}
       nodeSelector: {{- .Values.gwProxy.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.gwProxy.tolerations }}
+{{- if eq true .Values.gwProxy.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.gwProxy.tolerations }}
       tolerations: {{- .Values.gwProxy.tolerations | toYaml | nindent 8 }}
 {{- end }}
 ---
@@ -321,11 +335,13 @@ metadata:
 spec:
   clusterIP: None
   ports:
-    - port: 8080
+{{- if .Values.gateway.service.httpEndpoint.enabled }}
+    - port: {{ .Values.gateway.service.httpEndpoint.port }}
       protocol: TCP
       name: http
       targetPort: 8080
-    - port: 50051
+{{- end }}
+    - port: {{ .Values.gateway.service.grpc.port }}
       protocol: TCP
       name: grpc
       targetPort: 50051

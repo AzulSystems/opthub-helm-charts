@@ -17,3 +17,16 @@ Result: {{ if eq (.exp | int) (.val | int) }}OK{{ else }}FAIL{{ end }}
 #TEST: Caches: {{ $caches }} Expected: {{ .expectedCaches }} {{include "_assert" (dict "exp" .expectedCaches "val" $caches)}}
 #TEST: Gateways: {{ $gateways }} Expected: {{ .expectedGateways }} {{include "_assert" (dict "exp" .expectedGateways "val" $gateways)}}
 {{- end -}}
+
+
+{{- define "_runTestPromotionThresholds" -}}
+{{- $derivedMinProfileSizePerGeneration := include "_getPromotionMinProfileSizePerGeneration" (dict "minProfileSize" .inputMinProfileSize "minProfileSizePerGeneration" .inputMinProfileSizePerGeneration) -}}
+{{- $derivedMinProfileDurationPerGeneration := include "_getPromotionMinProfileDurationPerGeneration" (dict "minProfileDuration" .inputMinProfileDuration "minProfileDurationPerGeneration" .inputMinProfileDurationPerGeneration) -}}
+#TEST ----------------
+#TEST: input minProfileSize: {{ .inputMinProfileSize | int64 }}, default: {{ .Values.readyNowOrchestrator.promotion.minProfileSize | int64 }}
+#TEST: input minProfileSizePerGeneration: {{ .inputMinProfileSizePerGeneration | quote }}, default: {{ .Values.readyNowOrchestrator.promotion.minProfileSizePerGeneration | quote }}
+#TEST: input minProfileDuration: {{ .inputMinProfileDuration | quote }}, default: {{ .Values.readyNowOrchestrator.promotion.minProfileDuration | quote }}
+#TEST: input minProfileDurationPerGeneration: {{ .inputMinProfileDurationPerGeneration | quote }}, default: {{ .Values.readyNowOrchestrator.promotion.minProfileDurationPerGeneration | quote }}
+#TEST: output minProfileSizePerGeneration: {{ $derivedMinProfileSizePerGeneration | quote }}. Expected: {{ .expectedMinProfileSizePerGeneration | quote }} {{include "_assert" (dict "exp" .expectedMinProfileSizePerGeneration "val" $derivedMinProfileSizePerGeneration)}}
+#TEST: output minProfileDurationPerGeneration: {{ $derivedMinProfileDurationPerGeneration | quote }}. Expected: {{ .expectedMinProfileDurationPerGeneration | quote }} {{include "_assert" (dict "exp" .expectedMinProfileDurationPerGeneration "val" $derivedMinProfileDurationPerGeneration)}}
+{{- end -}}

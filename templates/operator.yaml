@@ -75,12 +75,18 @@ spec:
         prometheus.io/port: "8060"
         prometheus.io/path: "/q/metrics"
     spec:
+      {{- if .Values.operator.spec }}
+      {{- .Values.operator.spec | toYaml | nindent 6 }}
+      {{- end }}
       securityContext:
         runAsNonRoot: true
       containers:
         - name: operator
           image: {{ .Values.registry.opthub }}/opthub-operator:{{ .Values.version }}{{ .Values.operator.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if .Values.operator.command }}
+          command: {{- .Values.operator.command | toYaml | nindent 10 }}
+          {{- end }}
           args:
             - -Dbroker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
             - -Dbroker.min-replicas={{ include "sizing.compileBroker.minReplicas" . }}
@@ -107,10 +113,21 @@ spec:
           resources: {{- .Values.operator.resources | toYaml | nindent 12 }}
           {{- end }}
       serviceAccountName: opthub-operator
-{{- if .Values.operator.nodeSelector }}
+{{- if eq true .Values.operator.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.operator.nodeSelector }}
       nodeSelector: {{- .Values.operator.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.operator.tolerations }}
+{{- if eq true .Values.operator.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.operator.tolerations }}
       tolerations: {{- .Values.operator.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- end}}

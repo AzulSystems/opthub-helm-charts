@@ -15,7 +15,6 @@ compilations:
 db:
   enabled: false
 
-
 codeCache:
   cleaner:
     enabled: false

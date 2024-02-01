@@ -53,3 +53,15 @@
 #TEST FAIL - the testDataDefaultSetup not found!
 {{ end }}
 {{ end }}
+
+
+# Test for RNO promotion thresholds
+{{ if .Values.testDataPromotion }}
+{{ range $test := .Values.testDataPromotion }}
+{{ with $ }}
+{{ include "_runTestPromotionThresholds" (dict "Values" .Values "inputMinProfileSize" $test.minProfileSize "inputMinProfileSizePerGeneration" $test.minProfileSizePerGeneration "inputMinProfileDuration" $test.minProfileDuration "inputMinProfileDurationPerGeneration" $test.minProfileDurationPerGeneration "expectedMinProfileSizePerGeneration" $test.expectedMinProfileSizePerGeneration "expectedMinProfileDurationPerGeneration" $test.expectedMinProfileDurationPerGeneration) }}
+{{ end }}
+{{ end }}
+{{ else }}
+#TEST FAIL - the testDataPromotion not found!
+{{ end }}

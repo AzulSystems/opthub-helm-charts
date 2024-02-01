@@ -1,0 +1,171 @@
+{{- if .Values.mgmtGateway }}
+{{- if .Values.mgmtGateway.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mgmt-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mgmt-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mgmt-gateway
+  template:
+    metadata:
+      labels:
+        app: mgmt-gateway
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8120"
+        prometheus.io/path: "/q/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      {{- if .Values.mgmtGateway.spec }}
+      {{- .Values.mgmtGateway.spec | toYaml | nindent 6 }}
+      {{- end }}
+      containers:
+        - name: mgmt-gateway
+          image: {{ .Values.registry.opthub }}/opthub-mgmt-gateway:{{ .Values.version }}{{ .Values.mgmtGateway.versionSuffix }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if .Values.mgmtGateway.command }}
+          command: {{- .Values.operator.command | toYaml | nindent 10 }}
+          {{- end }}
+          env:
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: s3
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-storage-credentials
+                  key: minio-accesskey
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: infrastructure-storage-credentials
+                  key: minio-secretkey
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
+              value: static
+
+{{- else if eq "s3" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: s3
+            - name: ENGINE_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.s3.commonBucket }}
+            - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ .Release.Namespace }}/compiler-engines/
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.s3.commonBucket }}
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ .Release.Namespace }}/persistent-profile/
+
+{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: azure-blob
+            - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
+              value: {{ .Values.storage.azureBlob.endpoint }}
+            - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
+              value: {{ .Values.storage.azureBlob.authMethod }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
+            - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: azure-storage-credentials
+                  key: azure-storage-sas-token
+  {{- end  }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
+            - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: azure-storage-credentials
+                  key: azure-storage-connection-string
+  {{- end  }}
+            - name: ENGINE_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.azureBlob.container }}
+            - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ .Release.Namespace }}/compiler-engines/
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.azureBlob.container }}
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ .Release.Namespace }}/persistent-profile/
+{{- end  }}
+          args:
+            - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
+{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+            - "-Dquarkus.s3.endpoint-override=http://storage:9000"
+{{- end  }}
+            - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
+            - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
+            - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
+            - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
+            - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
+            - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+            - "-Dreadynoworchestrator.promotion.max-synchronized-generation={{ .Values.readyNowOrchestrator.producers.maxSynchronizedGeneration }}"
+            - "-Dreadynoworchestrator.promotion.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
+            - "-Dreadynoworchestrator.promotion.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize | int64 }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
+            - "-Dopthub.synchronization.enabled={{ .Values.synchronization.enabled }}"
+            - "-Dopthub.synchronization.peers={{ .Values.synchronization.peers }}"
+            - "-Dopthub.synchronization.period={{ .Values.synchronization.period }}"
+            - "-Dopthub.synchronization.delay={{ .Values.synchronization.initialDelay }}"
+{{- if .Values.mgmtGateway.extraArguments }}
+    {{- .Values.mgmtGateway.extraArguments | toYaml | nindent 12 }}
+{{- end }}
+{{- if .Values.mgmtGateway.extraArgumentsMap }}
+    {{- range $key, $val := .Values.mgmtGateway.extraArgumentsMap }}
+            - -D{{ $key }}={{ $val }}
+    {{- end }}
+          ports:
+            - containerPort: 8120
+              name: http-endpoint
+{{- end }}
+{{- if .Values.mgmtGateway.resources }}
+          resources: {{- .Values.mgmtGateway.resources | toYaml | nindent 12 }}
+{{- end }}
+{{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.mgmtGateway.nodeSelector }}
+      nodeSelector: {{- .Values.mgmtGateway.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.mgmtGateway.tolerations }}
+      tolerations: {{- .Values.mgmtGateway.tolerations | toYaml | nindent 8 }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgmt-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mgmt-gateway
+{{- if .Values.mgmtGateway.service.annotations }}
+  annotations: {{- .Values.mgmtGateway.service.annotations | toYaml | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.mgmtGateway.service.type }}
+  ports:
+    - port: {{ .Values.mgmtGateway.service.httpEndpoint.port }}
+      protocol: TCP
+      name: http-server
+      targetPort: 8120
+  selector:
+    app: mgmt-gateway
+{{- end }}
+{{- end }}

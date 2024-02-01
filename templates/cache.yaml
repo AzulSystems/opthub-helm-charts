@@ -29,20 +29,44 @@ spec:
         prometheus.io/path: "/q/metrics"
         prometheus.io/port: "8070"
     spec:
+      {{- if .Values.cache.spec }}
+      {{- .Values.cache.spec | toYaml | nindent 6 }}
+      {{- end }}
       securityContext:
         runAsNonRoot: true
       containers:
       - name: cache
         image: {{ .Values.registry.opthub }}/opthub-hazelcast:{{ .Values.version }}{{ .Values.cache.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        {{- if .Values.cache.command }}
+        command: {{- .Values.cache.command | toYaml | nindent 8 }}
+        {{- end }}
         ports:
         - containerPort: 5701
           name: ch-server
         - containerPort: 8070
           name: metrics
         env:
+{{- if eq "sqldb" .Values.codeCache.storageType }}
+          - name: MAPLOADERS_STORAGE_TYPE
+            value: sqldb
+{{- else if eq "blobstore" .Values.codeCache.storageType }}
+          - name: MAPLOADERS_STORAGE_TYPE
+            value: blobstore
+{{- else }}
+          - name: MAPLOADERS_STORAGE_TYPE
+            value: unsupported
+{{- end }}
+{{- if .Values.codeCache.storage.offloadReadOperations }}
+          - name: MAPLOADERS_OFFLOAD_ENABLED
+            value: "true"
+{{- else }}
+          - name: MAPLOADERS_OFFLOAD_ENABLED
+            value: "false"
+{{- end }}
+
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
@@ -58,46 +82,53 @@ spec:
             value: static
 
 {{- else if eq "s3" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
-          - name: engine.storage-location.bucket
+          - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
-          - name: engine.storage-location.path-prefix
+          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/compiler-engines/
-          - name: readynoworchestrator.storage-location.bucket
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
-          - name: readynoworchestrator.storage-location.path-prefix
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
-
+          - name: MAPLOADERS_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.s3.commonBucket }}
+          - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ .Release.Namespace }}/code-cache/
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
-          - name: blob-storage.azure-blob.endpoint
+          - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
             value: {{ .Values.storage.azureBlob.endpoint }}
-          - name: blob-storage.azure-blob.authMethod
+          - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
             value: {{ .Values.storage.azureBlob.authMethod }}
   {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
-          - name: blob-storage.azure-blob.sasToken
+          - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
                 name: azure-storage-credentials
                 key: azure-storage-sas-token
   {{- end }}
   {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
-          - name: blob-storage.azure-blob.connectionString
+          - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
                 name: azure-storage-credentials
                 key: azure-storage-connection-string
   {{- end  }}
-          - name: engine.storage-location.bucket
+          - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
-          - name: engine.storage-location.path-prefix
+          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/compiler-engines/
-          - name: readynoworchestrator.storage-location.bucket
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
-          - name: readynoworchestrator.storage-location.path-prefix
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
+          - name: MAPLOADERS_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.azureBlob.container }}
+          - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ .Release.Namespace }}/code-cache/
 {{- end  }}
 {{- if eq true .Values.db.enabled }}
           - name: QUARKUS_DATASOURCE_USERNAME
@@ -119,7 +150,6 @@ spec:
           - "-Dhazelcast.kubernetes.enabled=true"
           - "-Dhazelcast.kubernetes.namespace={{ .Release.Namespace }}"
           - "-Dhazelcast.kubernetes.service-name=cache"
-          - "-Dhz.jet.enabled=true"
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
           - "-Dquarkus.s3.endpoint-override=http://storage:9000"
 {{- end  }}
@@ -133,8 +163,6 @@ spec:
           - "-Dquarkus.flyway.migrate-at-start=false"
 {{- end }}
           - "-Dquarkus.datasource.jdbc.max-size=100"
-          - "-Dhazelcast.shutdownhook.policy=GRACEFUL"
-          - "-Dhazelcast.shutdownhook.enabled=true"
           - "-Dhazelcast.graceful.shutdown.max.wait=300"
           - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
           - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
@@ -151,10 +179,21 @@ spec:
         {{- end }}
       terminationGracePeriodSeconds: 300
       serviceAccountName: opthub-cache
-{{- if .Values.cache.nodeSelector }}
+{{- if eq true .Values.cache.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.cache.nodeSelector }}
       nodeSelector: {{- .Values.cache.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.cache.tolerations }}
+{{- if eq true .Values.cache.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.cache.tolerations }}
       tolerations: {{- .Values.cache.tolerations | toYaml | nindent 8 }}
 {{- end }}
 

@@ -37,6 +37,9 @@ spec:
       annotations:
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
     spec:
+      {{- if .Values.builtinStorage.spec }}
+      {{- .Values.builtinStorage.spec | toYaml | nindent 6 }}
+      {{- end }}
       securityContext:
         runAsNonRoot: true
         fsGroupChangePolicy: OnRootMismatch
@@ -73,10 +76,21 @@ spec:
         - name: data
           emptyDir: {}
 {{- end }}
-{{- if .Values.builtinStorage.nodeSelector }}
+  {{- if eq true .Values.builtinStorage.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.builtinStorage.nodeSelector }}
       nodeSelector: {{- .Values.builtinStorage.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.builtinStorage.tolerations }}
+{{- if eq true .Values.builtinStorage.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.builtinStorage.tolerations }}
       tolerations: {{- .Values.builtinStorage.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.builtinStorage.persistentDataVolume.enabled }}

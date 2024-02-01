@@ -36,6 +36,9 @@ spec:
       annotations:
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
     spec:
+      {{- if .Values.db.spec }}
+      {{- .Values.db.spec | toYaml | nindent 6 }}
+      {{- end }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
@@ -44,6 +47,9 @@ spec:
       containers:
       - name: db
         image: {{ .Values.registry.dockerhubMirror }}library/mariadb:{{ .Values.db.version }}
+{{- if .Values.db.command }}
+        command: {{- .Values.db.command | toYaml | nindent 8 }}
+{{- end }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         env:
           - name: "MYSQL_DATABASE"
@@ -80,10 +86,21 @@ spec:
           - name: data
             mountPath: "/var/lib/mysql"
 {{- end }}
-{{- if .Values.db.nodeSelector }}
+{{- if eq true .Values.db.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.db.nodeSelector }}
       nodeSelector: {{- .Values.db.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.db.tolerations }}
+{{- if eq true .Values.db.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.db.tolerations }}
       tolerations: {{- .Values.db.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.db.persistentDataVolume.enabled }}
@@ -175,13 +192,19 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      {{- if .Values.gateway.spec }}
+      {{- .Values.gateway.spec | toYaml | nindent 6 }}
+      {{- end }}
       containers:
       - name: gateway
         image: {{ .Values.registry.opthub }}/opthub-gateway:{{ .Values.version }}{{ .Values.gateway.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        {{- if .Values.gateway.command }}
+        command: {{- .Values.gateway.command | toYaml | nindent 8 }}
+        {{- end }}
         env:
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
@@ -197,51 +220,47 @@ spec:
             value: static
 
 {{- else if eq "s3" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
-          - name: engine.storage-location.bucket
+          - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
-          - name: engine.storage-location.path-prefix
+          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/compiler-engines/
-          - name: readynoworchestrator.storage-location.bucket
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
-          - name: readynoworchestrator.storage-location.path-prefix
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
 
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
-          - name: blob-storage.storage-service
+          - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
-          - name: blob-storage.azure-blob.endpoint
+          - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
             value: {{ .Values.storage.azureBlob.endpoint }}
-          - name: blob-storage.azure-blob.authMethod
+          - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
             value: {{ .Values.storage.azureBlob.authMethod }}
   {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
-          - name: blob-storage.azure-blob.sasToken
+          - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
                 name: azure-storage-credentials
                 key: azure-storage-sas-token
   {{- end  }}
   {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
-          - name: blob-storage.azure-blob.connectionString
+          - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
                 name: azure-storage-credentials
                 key: azure-storage-connection-string
   {{- end  }}
-          - name: engine.storage-location.bucket
+          - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
-          - name: engine.storage-location.path-prefix
+          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/compiler-engines/
-          - name: readynoworchestrator.storage-location.bucket
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
-          - name: readynoworchestrator.storage-location.path-prefix
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
 {{- end  }}
-          - name: SERVER_ADDRESS
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
           - name: QUARKUS_S3_CLOUD_REGION
             value: us-west-2
         args:
@@ -262,10 +281,10 @@ spec:
         - "-Dreadynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}"
         - "-Dreadynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
         - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
-        - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
-        - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
-        - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
-        - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+        - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize | int64 }}"
+        - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
+        - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
+        - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
   {{- if .Values.gateway.resources }}
         - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
 {{- end}}
@@ -317,10 +336,21 @@ spec:
           secret:
             secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
 {{- end }}
-{{- if .Values.gateway.nodeSelector }}
+{{- if eq true .Values.gateway.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.gateway.nodeSelector }}
       nodeSelector: {{- .Values.gateway.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.gateway.tolerations }}
+{{- if eq true .Values.gateway.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.gateway.tolerations }}
       tolerations: {{- .Values.gateway.tolerations | toYaml | nindent 8 }}
 {{- end }}
 
