@@ -272,12 +272,14 @@ spec:
         - "-Dquarkus.s3.endpoint-override=http://storage:9000"
 {{- end  }}
         - "-Dcompilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}"
+        - "-Dcompilation.limit.vm-min-version={{ .Values.compilations.minVmVersionForCNCCompilation }}"
         - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
         - "-Dreadynoworchestrator.debug-info-history-length={{ .Values.readyNowOrchestrator.debugInfoHistoryLength }}"
         - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
         - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
         - "-Dreadynoworchestrator.cache.enabled={{ .Values.readyNowOrchestrator.cache.enabled }}"
         - "-Dreadynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes | int64 }}"
+        - "-Dreadynoworchestrator.producers.continue-recording-on-promotion={{ .Values.readyNowOrchestrator.producers.continueRecordingOnPromotion }}"
         - "-Dreadynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}"
         - "-Dreadynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
         - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
@@ -285,6 +287,10 @@ spec:
         - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
         - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
         - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
+        - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
+        - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
+        - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
+        - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
   {{- if .Values.gateway.resources }}
         - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
 {{- end}}
@@ -366,7 +372,6 @@ metadata:
   annotations: {{- .Values.gateway.service.annotations | toYaml | nindent 4 }}
 {{- end }}
 spec:
-  type: {{ .Values.gateway.service.type }}
   ports:
 {{- if .Values.gateway.service.httpEndpoint.enabled }}
     - port: {{ .Values.gateway.service.httpEndpoint.port }}
@@ -385,6 +390,7 @@ spec:
 {{- else }}
   selector:
     app: gateway
+  type: {{ .Values.gateway.service.type }}
 {{- end }}
 
 {{- if and .Values.autoscaler .Values.gateway.autoscaler.enabled}}

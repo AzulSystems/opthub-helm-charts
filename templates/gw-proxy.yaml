@@ -269,7 +269,7 @@ spec:
         runAsNonRoot: true
       containers:
         - name: gw-proxy
-          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.28-latest
+          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.29-latest
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           {{- if .Values.gwProxy.command }}
           command: {{- .Values.gwProxy.command | toYaml | nindent 10 }}

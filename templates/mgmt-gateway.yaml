@@ -8,6 +8,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: mgmt-gateway
+    {{- if .Values.mgmtGateway.applicationLabels }}
+    {{- .Values.mgmtGateway.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   replicas: 1
   selector:
@@ -17,10 +20,13 @@ spec:
     metadata:
       labels:
         app: mgmt-gateway
+        {{- if .Values.mgmtGateway.podTemplateLabels }}
+        {{- .Values.mgmtGateway.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
       annotations:
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8120"
+        prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
     spec:
       securityContext:
@@ -101,10 +107,6 @@ spec:
 {{- end  }}
             - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
             - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
-            - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
-            - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
-            - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
-            - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
             - "-Dreadynoworchestrator.promotion.max-synchronized-generation={{ .Values.readyNowOrchestrator.producers.maxSynchronizedGeneration }}"
             - "-Dreadynoworchestrator.promotion.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
             - "-Dreadynoworchestrator.promotion.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
@@ -124,7 +126,7 @@ spec:
             - -D{{ $key }}={{ $val }}
     {{- end }}
           ports:
-            - containerPort: 8120
+            - containerPort: 8080
               name: http-endpoint
 {{- end }}
 {{- if .Values.mgmtGateway.resources }}
@@ -164,7 +166,7 @@ spec:
     - port: {{ .Values.mgmtGateway.service.httpEndpoint.port }}
       protocol: TCP
       name: http-server
-      targetPort: 8120
+      targetPort: 8080
   selector:
     app: mgmt-gateway
 {{- end }}

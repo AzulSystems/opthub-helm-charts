@@ -27,7 +27,7 @@ spec:
         "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
         prometheus.io/scrape: "true"
         prometheus.io/path: "/q/metrics"
-        prometheus.io/port: "8070"
+        prometheus.io/port: "8080"
     spec:
       {{- if .Values.cache.spec }}
       {{- .Values.cache.spec | toYaml | nindent 6 }}
@@ -44,8 +44,10 @@ spec:
         ports:
         - containerPort: 5701
           name: ch-server
-        - containerPort: 8070
+        - containerPort: 8080
           name: metrics
+        - containerPort: 50071
+          name: grpc
         env:
 {{- if eq "sqldb" .Values.codeCache.storageType }}
           - name: MAPLOADERS_STORAGE_TYPE
@@ -63,6 +65,13 @@ spec:
 {{- else }}
           - name: MAPLOADERS_OFFLOAD_ENABLED
             value: "false"
+{{- end }}
+{{- if .Values.codeCache.storage.writeBehindStorageMethod }}
+{{- else }}
+          - name: MAPLOADERS_BUCKETSBYCOMPILATIONHASHDBCACHE_WRITE_DELAY_SECONDS
+            value: "0"
+          - name: MAPLOADERS_CACHEITEMDBCACHEV2_WRITE_DELAY_SECONDS
+            value: "0"
 {{- end }}
 
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}

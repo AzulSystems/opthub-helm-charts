@@ -1,5 +1,5 @@
 ---
-version: "1.9.0"
+version: "1.9.1"
 
 clusterName: "cluster.local"
 
@@ -60,6 +60,7 @@ ssl:
     password: "pass"
 
 compilations:
+  minVmVersionForCNCCompilation: ""
   parallelism:
     # Maximum concurrent compilation limit per VM (VMs will not send more than this amount at the same time).
     limitPerVm: 500
@@ -75,7 +76,8 @@ readyNowOrchestrator:
     enabled: true
     maxSizeBytes: 500000000
   producers:
-    maxConcurrentRecordings: 5
+    continueRecordingOnPromotion: false
+    maxConcurrentRecordings: 10
     maxPromotableGeneration: 3
     maxSynchronizedGeneration: 2
     maxProfileSize: 0
@@ -98,6 +100,7 @@ codeCache:
   storageType: sqldb # use sqldb|blobstore
   storage:
     offloadReadOperations: false
+    writeBehindStorageMethod: true
 
 synchronization:
   enabled: true
@@ -251,7 +254,7 @@ db:
   enabled: true
   version: "10.5.12"
   replicas: 1
-  schemaRecreateRegularCheck: false
+  schemaRecreateRegularCheck: true
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -311,5 +314,9 @@ mgmtGateway:
       port: 8080
   nodeSelector:
     kubernetes.io/arch: amd64
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
 
 test: false
