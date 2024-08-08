@@ -28,17 +28,17 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
     spec:
-      {{- if .Values.cache.spec }}
-      {{- .Values.cache.spec | toYaml | nindent 6 }}
+      {{- if .Values.compileBroker.spec }}
+      {{- .Values.compileBroker.spec | toYaml | nindent 6 }}
       {{- end }}
       securityContext:
         runAsNonRoot: true
       containers:
       - name: compile-broker
-        image: {{ .Values.registry.opthub }}/opthub-compile-broker:{{ .Values.version }}{{ .Values.compileBroker.versionSuffix }}
+        image: {{ .Values.registry.opthub }}/opthub-compile-broker:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.compileBroker.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
-        {{- if .Values.cache.command }}
-        command: {{- .Values.cache.command | toYaml | nindent 8 }}
+        {{- if .Values.compileBroker.command }}
+        command: {{- .Values.compileBroker.command | toYaml | nindent 8 }}
         {{- end }}
         env:
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
@@ -154,6 +154,9 @@ spec:
 {{- else if .Values.compileBroker.tolerations }}
       tolerations: {{- .Values.compileBroker.tolerations | toYaml | nindent 8 }}
 {{- end }}
+{{- if .Values.compileBroker.affinity }}
+      affinity: {{- .Values.compileBroker.affinity | toYaml | nindent 8 }}
+{{- end }}
 
 ---
 apiVersion: v1
@@ -163,6 +166,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: compile-broker
+    {{- if .Values.compileBroker.serviceLabels }}
+    {{- .Values.compileBroker.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   type: ClusterIP
   ports:

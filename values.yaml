@@ -1,6 +1,4 @@
 ---
-version: "1.9.2"
-
 clusterName: "cluster.local"
 
 autoscaler: true
@@ -92,6 +90,7 @@ readyNowOrchestrator:
     targetSize: 0 # use only to override auto-settings
     warningSize: 0 # use only to override auto-settings
     keepUnrequestedProfileNamesFor: 0
+    keepDebugOnlyGenerationProfilesFor: "P7D"
 
 codeCache:
   cleaner:
@@ -137,6 +136,8 @@ builtinStorage:
       ephemeral-storage: "200Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   # when using persistent data volume make sure to lower ephemeral-storage allocation
   persistentDataVolume:
     enabled: false
@@ -146,6 +147,7 @@ builtinStorage:
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 gateway:
   replicas: 1
@@ -174,10 +176,13 @@ gateway:
     grpc:
       port: 50051
     # annotations: {}
+  tolerations: {}
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 gwProxy:
   enabled: true
@@ -198,10 +203,13 @@ gwProxy:
       ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 compileBroker:
   enabled: true
@@ -223,10 +231,13 @@ compileBroker:
       ephemeral-storage: "8Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 cache:
   replicas: 1
@@ -245,10 +256,13 @@ cache:
       memory: "28Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 db:
   enabled: true
@@ -268,6 +282,8 @@ db:
       ephemeral-storage: "200Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   # when using persistent data volume make sure to lower ephemeral-storage allocation
   persistentDataVolume:
     enabled: false
@@ -277,8 +293,10 @@ db:
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 operator:
+  scaleDownStabilizationWindow: 60S
   timeToClearOptimizationBacklog: 120s
   sessionBalancing:
     enabled: true
@@ -293,6 +311,8 @@ operator:
       ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
   applicationLabels:
     #release: "stable"
   podTemplateLabels:
@@ -318,5 +338,6 @@ mgmtGateway:
     #release: "stable"
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 test: false

@@ -17,7 +17,7 @@ metadata:
   name: storage
   namespace: {{ .Release.Namespace }}
   labels:
-    app: cache
+    app: storage
     {{- if .Values.builtinStorage.applicationLabels }}
     {{- .Values.builtinStorage.applicationLabels | toYaml | nindent 4 }}
     {{- end }}
@@ -46,7 +46,7 @@ spec:
         fsGroup: 101
       containers:
         - name: storage
-          image: {{ .Values.registry.opthub }}/opthub-storage:{{ .Values.version }}{{ .Values.builtinStorage.versionSuffix }}
+          image: {{ .Values.registry.opthub }}/opthub-storage:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.builtinStorage.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           env:
             - name: MINIO_ACCESS_KEY
@@ -113,6 +113,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: storage
+    {{- if .Values.builtinStorage.serviceLabels }}
+    {{- .Values.builtinStorage.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   type: ClusterIP
   clusterIP: None

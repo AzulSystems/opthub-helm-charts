@@ -25,6 +25,9 @@ gateway:
 gwProxy:
   resources:
 
+mgmtGateway:
+  resources:
+
 compileBroker:
   resources:
 

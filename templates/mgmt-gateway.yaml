@@ -36,10 +36,10 @@ spec:
       {{- end }}
       containers:
         - name: mgmt-gateway
-          image: {{ .Values.registry.opthub }}/opthub-mgmt-gateway:{{ .Values.version }}{{ .Values.mgmtGateway.versionSuffix }}
+          image: {{ .Values.registry.opthub }}/opthub-mgmt-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.mgmtGateway.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           {{- if .Values.mgmtGateway.command }}
-          command: {{- .Values.operator.command | toYaml | nindent 10 }}
+          command: {{- .Values.mgmtGateway.command | toYaml | nindent 10 }}
           {{- end }}
           env:
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
@@ -149,6 +149,9 @@ spec:
 {{- else if .Values.mgmtGateway.tolerations }}
       tolerations: {{- .Values.mgmtGateway.tolerations | toYaml | nindent 8 }}
 {{- end }}
+{{- if .Values.mgmtGateway.affinity }}
+      affinity: {{- .Values.mgmtGateway.affinity | toYaml | nindent 8 }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -157,6 +160,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: mgmt-gateway
+    {{- if .Values.mgmtGateway.serviceLabels }}
+    {{- .Values.mgmtGateway.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 {{- if .Values.mgmtGateway.service.annotations }}
   annotations: {{- .Values.mgmtGateway.service.annotations | toYaml | nindent 4 }}
 {{- end }}

@@ -36,7 +36,7 @@ spec:
         runAsNonRoot: true
       containers:
       - name: cache
-        image: {{ .Values.registry.opthub }}/opthub-hazelcast:{{ .Values.version }}{{ .Values.cache.versionSuffix }}
+        image: {{ .Values.registry.opthub }}/opthub-hazelcast:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.cache.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         {{- if .Values.cache.command }}
         command: {{- .Values.cache.command | toYaml | nindent 8 }}
@@ -205,6 +205,9 @@ spec:
 {{- else if .Values.cache.tolerations }}
       tolerations: {{- .Values.cache.tolerations | toYaml | nindent 8 }}
 {{- end }}
+{{- if .Values.cache.affinity }}
+      affinity: {{- .Values.cache.affinity | toYaml | nindent 8 }}
+{{- end }}
 
 ---
 apiVersion: v1
@@ -214,6 +217,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: cache
+    {{- if .Values.cache.serviceLabels }}
+    {{- .Values.cache.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   type: ClusterIP
   clusterIP: None

@@ -64,7 +64,7 @@ spec:
               secretKeyRef:
                 name: infrastructure-credentials
                 key: mariadb-password
-          - name: "MARIADB_ALLOW_EMPTY_ROOT_PASSWORD"
+          - name: "MARIADB_RANDOM_ROOT_PASSWORD"
             value: "true"
         args:
           - "--innodb_data_file_path=azuldb:{{ div (include "_getDatabaseSizeInB" .) 1_048_576 }}M"
@@ -123,6 +123,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: db
+    {{- if .Values.db.serviceLabels }}
+    {{- .Values.db.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 spec:
   type: ClusterIP
   clusterIP: None
@@ -197,7 +200,7 @@ spec:
       {{- end }}
       containers:
       - name: gateway
-        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ .Values.version }}{{ .Values.gateway.versionSuffix }}
+        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.gateway.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         {{- if .Values.gateway.command }}
         command: {{- .Values.gateway.command | toYaml | nindent 8 }}
@@ -291,6 +294,7 @@ spec:
         - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
         - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
         - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+        - "-Dreadynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}"
   {{- if .Values.gateway.resources }}
         - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
 {{- end}}
@@ -359,6 +363,9 @@ spec:
 {{- else if .Values.gateway.tolerations }}
       tolerations: {{- .Values.gateway.tolerations | toYaml | nindent 8 }}
 {{- end }}
+{{- if .Values.gateway.affinity }}
+      affinity: {{- .Values.gateway.affinity | toYaml | nindent 8 }}
+{{- end }}
 
 ---
 apiVersion: v1
@@ -368,6 +375,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: gateway
+    {{- if .Values.gateway.serviceLabels }}
+    {{- .Values.gateway.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
 {{- if .Values.gateway.service.annotations }}
   annotations: {{- .Values.gateway.service.annotations | toYaml | nindent 4 }}
 {{- end }}
