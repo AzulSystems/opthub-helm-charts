@@ -16,7 +16,7 @@ data:
         - name: "envoy.resource_monitors.fixed_heap"
           typed_config:
             "@type": type.googleapis.com/envoy.extensions.resource_monitors.fixed_heap.v3.FixedHeapConfig
-            max_heap_size_bytes: 104857600  # 100 MiB
+            max_heap_size_bytes: {{ include "_getGwProxyOverloadManagerMaxHeapSize" . }}
       actions:
         - name: "envoy.overload_actions.shrink_heap"
           triggers:
@@ -88,6 +88,18 @@ data:
                       socket_address:
                         address: gateway-headless
                         port_value: 50051
+        circuit_breakers:
+          thresholds:
+            - priority: DEFAULT
+              max_connections: {{ .Values.gwProxy.circuitBreakers.maxConnections }}
+              max_pending_requests: {{ .Values.gwProxy.circuitBreakers.maxRequests }}
+              max_requests: {{ .Values.gwProxy.circuitBreakers.maxRequests }}
+              max_retries: 3
+            - priority: HIGH
+              max_connections: {{ .Values.gwProxy.circuitBreakers.maxConnections }}
+              max_pending_requests: {{ .Values.gwProxy.circuitBreakers.maxRequests }}
+              max_requests: {{ .Values.gwProxy.circuitBreakers.maxRequests }}
+              max_retries: 3
         typed_extension_protocol_options:
           envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
             "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -207,6 +219,14 @@ data:
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
                         path: /dev/stdout
+                        log_format:
+                          text_format_source:
+                            inline_string: >
+                              [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
+                              %RESPONSE_CODE% %GRPC_STATUS(SNAKE_STRING)% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT%
+                              %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%"
+                              "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%"
+
                   route_config:
                     name: search_route
                     virtual_hosts:

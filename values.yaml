@@ -43,6 +43,11 @@ secrets:
       # For authMethod: sas-token, Get sas-token on Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
       #sasToken: "<sas-token>"
 
+deployment:
+  serviceAccount:
+    labels: {}
+    annotations: {}
+
 ssl:
   enabled: false
   value:
@@ -117,6 +122,7 @@ storage:
   s3:
     # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to bucket below
     commonBucket: <your-bucket>
+    region: "us-west-2"
 
 #################################################################################
 # The rest of the settings are only to show you the values used internally.     #
@@ -201,6 +207,12 @@ gwProxy:
       cpu: "7"
       memory: "1Gi"
       ephemeral-storage: "1Gi"
+  overloadManager:
+    maxHeapSizePodRatio: "0.50" # "0.50" is 50% of gwProxy.resources.limits.memory
+    maxHeapSizeBytes: "0" # if not "0", then this value is used instead of maxHeapSizePodRatio
+  circuitBreakers:
+    maxRequests: "3072"
+    maxConnections: "3072"
   nodeSelector:
     kubernetes.io/arch: amd64
   tolerations: {}

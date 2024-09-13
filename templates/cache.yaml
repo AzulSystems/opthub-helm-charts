@@ -89,7 +89,6 @@ spec:
                 key: minio-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
-
 {{- else if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
@@ -105,6 +104,8 @@ spec:
             value: {{ .Values.storage.s3.commonBucket }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/code-cache/
+          - name: QUARKUS_S3_CLOUD_REGION
+            value: {{ .Values.storage.s3.region }}
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -272,7 +273,14 @@ kind: ServiceAccount
 metadata:
   name: opthub-cache
   namespace: {{ .Release.Namespace }}
-
+  {{- with .Values.deployment.serviceAccount.labels }}
+  labels:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.deployment.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

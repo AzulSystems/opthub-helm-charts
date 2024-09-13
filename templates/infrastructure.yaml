@@ -1,5 +1,17 @@
 ---
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opthub-gateway
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.deployment.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: infrastructure-credentials
@@ -221,7 +233,6 @@ spec:
                 key: minio-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
-
 {{- else if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
@@ -233,7 +244,8 @@ spec:
             value: {{ .Values.storage.s3.commonBucket }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
-
+          - name: QUARKUS_S3_CLOUD_REGION
+            value: {{ .Values.storage.s3.region }}
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -264,8 +276,6 @@ spec:
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
             value: {{ .Release.Namespace }}/persistent-profile/
 {{- end  }}
-          - name: QUARKUS_S3_CLOUD_REGION
-            value: us-west-2
         args:
         - "-XX:+ExitOnOutOfMemoryError"
         - "-XX:MaxRAMPercentage=80"
@@ -346,6 +356,7 @@ spec:
           secret:
             secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
 {{- end }}
+      serviceAccountName: opthub-gateway
 {{- if eq true .Values.gateway.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent

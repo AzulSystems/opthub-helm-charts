@@ -197,6 +197,14 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- end -}}
 {{- end -}}
 
+{{- define "_getGwProxyOverloadManagerMaxHeapSize" -}}
+{{- if eq "0" (.Values.gwProxy.overloadManager.maxHeapSizeBytes | toString) -}}
+{{- mulf (include "_getBytesFromResourceString" .Values.gwProxy.resources.limits.memory) .Values.gwProxy.overloadManager.maxHeapSizePodRatio | int -}}
+{{- else -}}
+{{- include "_getBytesFromResourceString" .Values.gwProxy.overloadManager.maxHeapSizeBytes -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Helpers below are introduced to calculate RNO per-generation properies. Helpers implementation
 has hardcoded some defaults that should match the corresponding values at
