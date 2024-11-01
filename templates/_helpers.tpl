@@ -199,7 +199,11 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 
 {{- define "_getGwProxyOverloadManagerMaxHeapSize" -}}
 {{- if eq "0" (.Values.gwProxy.overloadManager.maxHeapSizeBytes | toString) -}}
+{{- if ((((.Values.gwProxy).resources).limits).memory) }}
 {{- mulf (include "_getBytesFromResourceString" .Values.gwProxy.resources.limits.memory) .Values.gwProxy.overloadManager.maxHeapSizePodRatio | int -}}
+{{- else -}}
+104857600 {{- /* default 100 Mi if no setting is present*/ -}}
+{{- end -}}
 {{- else -}}
 {{- include "_getBytesFromResourceString" .Values.gwProxy.overloadManager.maxHeapSizeBytes -}}
 {{- end -}}

@@ -64,6 +64,7 @@ ssl:
 
 compilations:
   minVmVersionForCNCCompilation: ""
+  concurrencyBoost: ""
   parallelism:
     # Maximum concurrent compilation limit per VM (VMs will not send more than this amount at the same time).
     limitPerVm: 500
@@ -308,7 +309,7 @@ db:
   serviceLabels: # Additional labels for Service
 
 operator:
-  scaleDownStabilizationWindow: 60S
+  scaleDownStabilizationWindow: 120S
   timeToClearOptimizationBacklog: 120s
   sessionBalancing:
     enabled: true

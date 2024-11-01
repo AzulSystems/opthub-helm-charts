@@ -284,6 +284,9 @@ spec:
 {{- if eq "builtin-storage" .Values.storage.blobStorageService }}
         - "-Dquarkus.s3.endpoint-override=http://storage:9000"
 {{- end  }}
+{{- if .Values.compilations.concurrencyBoost }}
+        - "-Dvm.default-concurency-boost={{ .Values.compilations.concurrencyBoost }}"
+{{- end  }}
         - "-Dcompilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}"
         - "-Dcompilation.limit.vm-min-version={{ .Values.compilations.minVmVersionForCNCCompilation }}"
         - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
