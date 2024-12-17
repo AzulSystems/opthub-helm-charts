@@ -5,11 +5,9 @@ so this is the static value that will always be the same,
 except when manually tuned.
 */}}
 {{- define "_sizing.nonScalingComponents.vCores" -}}
-{{- $storageCpu := .Values.builtinStorage.resources.limits.cpu -}}
 {{- $dbCpu := .Values.db.resources.requests.cpu -}}
-{{- $storageReplicas := .Values.builtinStorage.replicas -}}
 {{- $dbReplicas := .Values.db.replicas -}}
-{{- add (mul $storageCpu $storageReplicas) (mul $dbCpu $dbReplicas) -}}
+{{- mulf $dbCpu $dbReplicas -}}
 {{- end -}}
 
 {{- define "_sizing.broker.vCores" -}}
@@ -112,18 +110,18 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 */}}
 {{- define "_calculateReplicas" -}}
 {{- $brokers := max 1 (default 1 .brokers) -}}
-{{- $caches := ceil (divf $brokers .Values.simpleSizing.relationships.brokersPerCache) -}}
-{{- $gateways := ceil (divf $brokers .Values.simpleSizing.relationships.brokersPerGateway) -}}
-{{- $brokerVCores := mul $brokers (include "_sizing.broker.vCores" .) -}}
-{{- $cacheVCores := mul $caches (include "_sizing.cache.vCores" .) -}}
-{{- $gatewayVCores := mul $gateways (include "_sizing.gateway.vCores" .) -}}
-{{- $totalVCores := add $brokerVCores $cacheVCores $gatewayVCores (include "_sizing.nonScalingComponents.vCores" .) -}}
-{{- if lt $totalVCores (.inputCapacity | int) -}}
+{{- $caches := max .Values.cache.autoscaler.min (ceil (divf $brokers .Values.simpleSizing.relationships.brokersPerCache)) -}}
+{{- $gateways := max .Values.gateway.autoscaler.min (ceil (divf $brokers .Values.simpleSizing.relationships.brokersPerGateway)) -}}
+{{- $brokerVCores := mulf $brokers (include "_sizing.broker.vCores" .) -}}
+{{- $cacheVCores := mulf $caches (include "_sizing.cache.vCores" .) -}}
+{{- $gatewayVCores := mulf $gateways (include "_sizing.gateway.vCores" .) -}}
+{{- $totalVCores := addf $brokerVCores $cacheVCores $gatewayVCores (include "_sizing.nonScalingComponents.vCores" .) -}}
+{{- if lt $totalVCores (.inputCapacity | float64) -}}
 {{- $newBrokers := add 1 $brokers -}}
 {{- include "_calculateReplicas" (dict "Values" .Values "brokers" $newBrokers "type" .type "inputCapacity" .inputCapacity) -}}
 {{- else -}}
 {{/* If we no longer fit inside the alotted capacity, decrease compile brokers, so that we fit in. */}}
-{{- $diff := sub $totalVCores .inputCapacity -}}
+{{- $diff := subf $totalVCores .inputCapacity -}}
 {{- $toSubtract := ceil (divf $diff (include "_sizing.broker.vCores" .)) -}}
 {{- $updatedBrokers := max 0 (sub $brokers $toSubtract) -}}
 {{- if eq .type "brokers" -}}
@@ -150,7 +148,7 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- if .Values.db.persistentDataVolume.enabled -}}
 {{- include "_getBytesFromResourceString" .Values.db.persistentDataVolume.size -}}
 {{- else -}}
-{{- sub (include "_getBytesFromResourceString" (get .Values.db.resources.limits "ephemeral-storage")) 1073741824 -}}
+{{- sub (include "_getBytesFromResourceString" (get .Values.db.resources.requests "ephemeral-storage")) 1073741824 -}}
 {{- end -}}
 {{- end -}}
 
@@ -168,20 +166,13 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- end -}}
 
 
-{{/* get appropriate volume size(persistent or ephemeral) and "reserve" 1G for system on shared ephemeral volume */}}
-{{- define "_getProfilesVolumeSpaceInB" -}}
-{{- if ne "builtin-storage" .Values.storage.blobStorageService }}
+{{- define "_getProfilesSpaceInB" -}}
 {{- include "_getBytesFromResourceString" .Values.readyNowOrchestrator.cleaner.externalPersistentStorageSoftLimit -}}
-{{- else if .Values.builtinStorage.persistentDataVolume.enabled -}}
-{{- include "_getBytesFromResourceString" .Values.builtinStorage.persistentDataVolume.size -}}
-{{- else -}}
-{{- sub (include "_getBytesFromResourceString" (get .Values.builtinStorage.resources.limits "ephemeral-storage")) 1073741824 -}}
-{{- end -}}
 {{- end -}}
 
 {{- define "_getProfilesWarningSizeInB" -}}
 {{- if eq "0" (.Values.readyNowOrchestrator.cleaner.warningSize | toString) -}}
-{{- mulf (include "_getProfilesVolumeSpaceInB" .) 0.9 | int -}}
+{{- mulf (include "_getProfilesSpaceInB" .) 0.9 | int -}}
 {{- else -}}
 {{- $warningSize := .Values.readyNowOrchestrator.cleaner.warningSize -}}
 {{- $warningSize -}}
@@ -190,7 +181,7 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 
 {{- define "_getProfilesEvictionTargetSizeInB" -}}
 {{- if eq "0" (.Values.readyNowOrchestrator.cleaner.targetSize | toString) -}}
-{{- mulf (include "_getProfilesVolumeSpaceInB" .) 0.9 0.6 | int -}}
+{{- mulf (include "_getProfilesSpaceInB" .) 0.9 0.6 | int -}}
 {{- else -}}
 {{- $targetSize := .Values.readyNowOrchestrator.cleaner.targetSize | toString -}}
 {{- $targetSize -}}
@@ -256,4 +247,12 @@ readyNowOrchestrator.promotion.
 {{- $inputMinProfileDuration := .Values.readyNowOrchestrator.promotion.minProfileDuration -}}
 {{- $inputMinProfileDurationPerGeneration := .Values.readyNowOrchestrator.promotion.minProfileDurationPerGeneration -}}
 {{ include "_getPromotionMinProfileDurationPerGeneration" (dict "minProfileDuration" $inputMinProfileDuration "minProfileDurationPerGeneration" $inputMinProfileDurationPerGeneration) }}
+{{- end -}}
+
+
+
+{{- define "storageLocationPathPrefixWithNamespace" -}}
+{{- if .Values.storage.pathPrefix -}}
+{{- .Values.storage.pathPrefix | replace "%namespace%" .Release.Namespace -}}/
+{{- end -}}
 {{- end -}}

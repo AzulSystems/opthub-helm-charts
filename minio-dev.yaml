@@ -1,0 +1,82 @@
+---
+# Deploys a new Namespace for the MinIO Pod
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio-dev # Change this value if you want a different namespace name
+  labels:
+    name: minio-dev # Change this value to match metadata.name
+---
+# Deploys a new MinIO Pod into the metadata.namespace Kubernetes namespace
+#
+# The `spec.containers[0].args` contains the command run on the pod
+# The `/data` directory corresponds to the
+#  `spec.containers[0].volumeMounts[0].mountPath`
+# That mount path corresponds to a Kubernetes HostPath which binds `/data`
+#  to a local drive or volume on the worker node where the pod runs
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: minio
+  name: minio
+  namespace: minio-dev # Change this value to match the namespace metadata.name
+spec:
+  containers:
+    - name: minio
+      image: quay.io/minio/minio:latest
+      command:
+        - /bin/bash
+        - -c
+      args:
+        - minio server /data --console-address :9090
+      volumeMounts:
+        - mountPath: /data
+          # Corresponds to the `spec.volumes` Persistent Volume
+          name: localvolume
+  nodeSelector:
+    # Specify a node label associated to the Worker Node on
+    # which you want to deploy the pod.
+    #kubernetes.io/hostname: kubealpha.local
+    kubernetes.io/arch: amd64
+  volumes:
+    - name: localvolume
+      hostPath: # MinIO generally recommends using locally-attached volumes
+        # Specify a path to a local drive or volume on the Kubernetes
+        # worker node
+        path: /mnt/disk1/data
+        # The path to the last directory must exist
+        type: DirectoryOrCreate
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  # This should match the namespace where your MinIO pod is running
+  namespace: minio-dev
+spec:
+  selector:
+    app: minio # This should match the label on your MinIO pod
+  ports:
+    - protocol: TCP
+      port: 9000 # The port you want to expose (MinIO default API port)
+      targetPort: 9000 # The port on the MinIO container
+      name: s3api
+    - protocol: TCP
+      port: 9090 # The port you want to expose for the MinIO console
+      targetPort: 9090 # The port on the MinIO container
+      name: console
+  # Change this to NodePort or LoadBalancer if you need external access
+  type: ClusterIP
+
+##############################################################################################
+##############################################################################################
+##############################################################################################
+# next steps
+# ----------
+# Create user minio:minio132
+# Create bucket 'opthub'

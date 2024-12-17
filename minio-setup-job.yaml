@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup-job
+  namespace: minio-dev  # Change this value to match the namespace metadata.name
+spec:
+  template:
+    spec:
+      containers:
+        - name: minio-setup
+          image: minio/mc
+          env:
+            - name: MINIO_ROOT_USER
+              value: "minioadmin"
+            - name: MINIO_ROOT_PASSWORD
+              value: "minioadmin"
+            - name: MINIO_BUCKET_NAME
+              value: "opthub"
+          command: ["sh", "-c"]
+          args:
+            - |
+              mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD &&
+              mc mb --ignore-existing myminio/$MINIO_BUCKET_NAME
+      restartPolicy: OnFailure

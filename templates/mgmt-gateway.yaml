@@ -57,34 +57,44 @@ spec:
           command: {{- .Values.mgmtGateway.command | toYaml | nindent 10 }}
           {{- end }}
           env:
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+{{- if eq "s3" .Values.storage.blobStorageService }}
             - name: BLOB_STORAGE_STORAGE_SERVICE
               value: s3
+    {{- if eq "static" .Values.storage.s3.credentialsType }}
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: infrastructure-storage-credentials
-                  key: minio-accesskey
+                  name: blob-storage-credentials
+                  key: blob-storage-accesskey
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: infrastructure-storage-credentials
-                  key: minio-secretkey
+                  name: blob-storage-credentials
+                  key: blob-storage-secretkey
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
               value: static
-{{- else if eq "s3" .Values.storage.blobStorageService }}
-            - name: BLOB_STORAGE_STORAGE_SERVICE
-              value: s3
+    {{- end }}
             - name: ENGINE_STORAGE_LOCATION_BUCKET
               value: {{ .Values.storage.s3.commonBucket }}
             - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-              value: {{ .Release.Namespace }}/compiler-engines/
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
             - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
               value: {{ .Values.storage.s3.commonBucket }}
             - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-              value: {{ .Release.Namespace }}/persistent-profile/
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
             - name: QUARKUS_S3_CLOUD_REGION
               value: {{ .Values.storage.s3.region }}
+{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: gcp-blob
+            - name: ENGINE_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.gcpBlob.commonBucket }}
+            - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
+              value: {{ .Values.storage.gcpBlob.commonBucket }}
+            - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
             - name: BLOB_STORAGE_STORAGE_SERVICE
               value: azure-blob
@@ -109,16 +119,16 @@ spec:
             - name: ENGINE_STORAGE_LOCATION_BUCKET
               value: {{ .Values.storage.azureBlob.container }}
             - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-              value: {{ .Release.Namespace }}/compiler-engines/
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
             - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
               value: {{ .Values.storage.azureBlob.container }}
             - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-              value: {{ .Release.Namespace }}/persistent-profile/
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- end  }}
           args:
             - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
-            - "-Dquarkus.s3.endpoint-override=http://storage:9000"
+{{- if .Values.storage.s3.storageEndpoint }}
+            - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
 {{- end  }}
             - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
             - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
@@ -140,12 +150,38 @@ spec:
     {{- range $key, $val := .Values.mgmtGateway.extraArgumentsMap }}
             - -D{{ $key }}={{ $val }}
     {{- end }}
+{{- end }}
           ports:
             - containerPort: 8080
               name: http-endpoint
-{{- end }}
 {{- if .Values.mgmtGateway.resources }}
           resources: {{- .Values.mgmtGateway.resources | toYaml | nindent 12 }}
+{{- end }}
+{{- if ne true .Values.mgmtGateway.disableKubernetesProbes }}
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /q/health/started
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 5
+            failureThreshold: 18
 {{- end }}
       serviceAccountName: opthub-mgmt-gateway
 {{- if eq true .Values.mgmtGateway.azureVirtualNodes }}

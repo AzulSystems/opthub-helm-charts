@@ -16,12 +16,13 @@ simpleSizing:
   # CNC infrastructure components to best utilize given resources.
   # The default number is the amount of vCores necessary to start
   # one replica of each CNC component, so that the service is operational.
-  vCores: 32
+  vCores: 39
   # minVCores and maxVCores has the same formula as vCores, but applied
   # when autoscaling is enabled.
-  minVCores: 32
+  minVCores: 39
   # Default max is to allocate 10 compile brokers.
-  maxVCores: 106
+  maxVCores: 113
+
 
   # Do not change these values unless you change the required CNC pod sizing.
   relationships:
@@ -32,16 +33,16 @@ secrets:
   db:
     username: "username"
     password: "password"
-  builtinStorage:
-    accesskey: "minio"
-    secretkey: "minio123"
+  blobStorage:
+    accesskey: <yourAccessKey>
+    secretkey: <yourSecretKey>
   azure:
     blobStorage:
-      # For authMethod: connection-string, get connection-string on Azure Portal > Storage accounts > {storage_account_name} > Access keys
-      #connectionString: "<connection-string>"
+      # connectionString: "<connection-string>"  # For authMethod: connection-string, get connection-string on
+      # Azure Portal > Storage accounts > {storage_account_name} > Access keys
 
-      # For authMethod: sas-token, Get sas-token on Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
-      #sasToken: "<sas-token>"
+      # sasToken: "<sas-token>"  # For authMethod: sas-token, Get sas-token on
+      # Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
 
 deployment:
   serviceAccount:
@@ -101,60 +102,41 @@ readyNowOrchestrator:
 codeCache:
   cleaner:
     enabled: true
-    targetSize: 0 # use only to override auto-settings
-  storageType: sqldb # use sqldb|blobstore
+    targetSize: "107374182400" # "107374182400" - 100GiB. Use quotes for large numbers.
+    interval: PT2H
+  storageType: blobstore # use sqldb|blobstore
   storage:
-    offloadReadOperations: false
+    offloadReadOperations: true
     writeBehindStorageMethod: true
 
 synchronization:
   enabled: true
-  peers: ""  # comma separated list of URLs pointing to REST API of other peers e.g. https://rno.cluster1:8080/,https://rno.cluster2:8080/
+  # comma separated list of URLs pointing to REST API of other peers,
+  # e.g. https://rno.cluster1:8080/,https://rno.cluster2:8080/
+  peers: ""
   initialDelay: "PT180s"
   period: "PT30s"
 
 storage:
-  blobStorageService: builtin-storage # available options: builtin-storage, azure-blob, s3
+  blobStorageService: s3 # available options: s3, azure-blob, gcp-blob
+  pathPrefix: "%namespace%" # string %namespace% will be replaced by K8S namespace, it can be extended ("%namespace%/test1") or used without namespace ("test2")
   azureBlob:
     endpoint: https://<yourendpoint>.blob.core.windows.net
     authMethod: default-credentials # available options: sas-token, connection-string, default-credentials
     # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to storage container below
     container: <your-container>
+  gcpBlob:
+    commonBucket: <your-bucket>
   s3:
     # K8s nodes that run cache, compilebroker and gateway PODs must have RW permissions to bucket below
     commonBucket: <your-bucket>
     region: "us-west-2"
-
+    storageEndpoint: "" # override to set your s3 endpoint if using S3 compatible storage service
+    credentialsType: "default" # available options: default, static
 #################################################################################
 # The rest of the settings are only to show you the values used internally.     #
 # Changing the values below will not have any affect on your CNC cluster.       #
 #################################################################################
-builtinStorage:
-  replicas: 1
-  resources:
-    requests:
-      cpu: "1"
-      memory: "24Gi"
-      ephemeral-storage: "32Gi"
-    limits:
-      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
-      cpu: "1"
-      memory: "24Gi"
-      ephemeral-storage: "200Gi"
-  nodeSelector:
-    kubernetes.io/arch: amd64
-  tolerations: {}
-  affinity: {}
-  # when using persistent data volume make sure to lower ephemeral-storage allocation
-  persistentDataVolume:
-    enabled: false
-    size: "200Gi"
-    storageClassName: "" # empty string uses default storage class
-  applicationLabels: # Additional labels for Deployment/StatefulSet
-    #release: "stable"
-  podTemplateLabels: # Additional labels for POD
-    #environment: "dev"
-  serviceLabels: # Additional labels for Service
 
 gateway:
   replicas: 1
@@ -257,7 +239,7 @@ cache:
   autoscaler:
     enabled: true
     mode: operator
-    min: 1
+    min: 2
     max: 2
   resources:
     requests:
@@ -278,10 +260,10 @@ cache:
   serviceLabels: # Additional labels for Service
 
 db:
-  enabled: true
-  version: "10.5.12"
+  enabled: false
+  version: "11.4.3"
   replicas: 1
-  schemaRecreateRegularCheck: true
+  schemaRecreateRegularCheck: false
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -311,8 +293,10 @@ db:
 operator:
   scaleDownStabilizationWindow: 120S
   timeToClearOptimizationBacklog: 120s
+  monitorPodCpuUsage: true
   sessionBalancing:
     enabled: true
+    minGatewayCpuUsage: "0.0"
   resources:
     requests:
       cpu: "1"

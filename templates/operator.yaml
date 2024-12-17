@@ -34,9 +34,11 @@ rules:
       - patch
   - apiGroups:
       - ""
+      - "metrics.k8s.io"
     resources:
       - pods
     verbs:
+      - get
       - list
 
 ---
@@ -102,14 +104,16 @@ spec:
             - -Dbroker.scale-down.stabilization-window={{ .Values.operator.scaleDownStabilizationWindow }}
             - -Dtime-to-clear-backlog={{ .Values.operator.timeToClearOptimizationBacklog}}
             - -Dsession-balancing.enabled={{ .Values.operator.sessionBalancing.enabled}}
+            - -Dsession-balancing.min-gateway-cpu-usage={{ .Values.operator.sessionBalancing.minGatewayCpuUsage}}
+            - -Doperator.monitor-pod-cpu-usage={{ .Values.operator.monitorPodCpuUsage}}
 {{- if eq "operator" .Values.cache.autoscaler.mode}}
-            - -Dscaling.cache.enabled=true
+            - -Dscaling.cache.enabled={{ .Values.cache.autoscaler.enabled }}
             - -Dscaling.cache.min-replicas={{ include "sizing.cache.minReplicas" . }}
             - -Dscaling.cache.max-replicas={{ include "sizing.cache.maxReplicas" . }}
             - -Dscaling.cache.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerCache }}
 {{- end }}
 {{- if eq "operator" .Values.gateway.autoscaler.mode}}
-            - -Dscaling.gateway.enabled=true
+            - -Dscaling.gateway.enabled={{ .Values.gateway.autoscaler.enabled }}
             - -Dscaling.gateway.min-replicas={{ include "sizing.gateway.minReplicas" . }}
             - -Dscaling.gateway.max-replicas={{ include "sizing.gateway.maxReplicas" . }}
             - -Dscaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
@@ -117,9 +121,39 @@ spec:
 {{- if .Values.operator.extraArguments }}
   {{- .Values.operator.extraArguments | toYaml | nindent 12 }}
 {{- end }}
+          ports:
+            - containerPort: 8080
+              name: http-endpoint
           {{- if .Values.operator.resources }}
           resources: {{- .Values.operator.resources | toYaml | nindent 12 }}
           {{- end }}
+          {{- if ne true .Values.operator.disableKubernetesProbes }}
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /q/health/started
+              port: http-endpoint
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            periodSeconds: 5
+            failureThreshold: 10
+          {{- end }}
+
       serviceAccountName: opthub-operator
 {{- if eq true .Values.operator.azureVirtualNodes }}
       nodeSelector:

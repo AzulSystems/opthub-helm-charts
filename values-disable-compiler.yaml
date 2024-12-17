@@ -1,5 +1,6 @@
+---
 compileBroker:
-  enabled : false
+  enabled: false
   replicas: 0
   autoscaler:
     enabled: false

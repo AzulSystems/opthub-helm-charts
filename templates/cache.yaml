@@ -48,6 +48,34 @@ spec:
           name: metrics
         - containerPort: 50071
           name: grpc
+
+{{- if ne true .Values.cache.disableKubernetesProbes }}
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: metrics
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: metrics
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /q/health/started
+            port: metrics
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 5
+          failureThreshold: 10
+{{- end }}
+
         env:
 {{- if eq "sqldb" .Values.codeCache.storageType }}
           - name: MAPLOADERS_STORAGE_TYPE
@@ -74,38 +102,53 @@ spec:
             value: "0"
 {{- end }}
 
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+{{- if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
+    {{- if eq "static" .Values.storage.s3.credentialsType }}
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: infrastructure-storage-credentials
-                key: minio-accesskey
+                name: blob-storage-credentials
+                key: blob-storage-accesskey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: infrastructure-storage-credentials
-                key: minio-secretkey
+                name: blob-storage-credentials
+                key: blob-storage-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
-{{- else if eq "s3" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: s3
+    {{- end }}
           - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-engines/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/persistent-profile/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
           - name: MAPLOADERS_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/code-cache/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
           - name: QUARKUS_S3_CLOUD_REGION
             value: {{ .Values.storage.s3.region }}
+{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
+          - name: BLOB_STORAGE_STORAGE_SERVICE
+            value: gcp-blob
+          - name: ENGINE_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.gcpBlob.commonBucket }}
+          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.gcpBlob.commonBucket }}
+          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
+          - name: MAPLOADERS_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.gcpBlob.commonBucket }}
+          - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
+
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -130,15 +173,15 @@ spec:
           - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-engines/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/persistent-profile/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
           - name: MAPLOADERS_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/code-cache/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
 {{- end  }}
 {{- if eq true .Values.db.enabled }}
           - name: QUARKUS_DATASOURCE_USERNAME
@@ -160,8 +203,8 @@ spec:
           - "-Dhazelcast.kubernetes.enabled=true"
           - "-Dhazelcast.kubernetes.namespace={{ .Release.Namespace }}"
           - "-Dhazelcast.kubernetes.service-name=cache"
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
-          - "-Dquarkus.s3.endpoint-override=http://storage:9000"
+{{- if .Values.storage.s3.storageEndpoint }}
+          - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
 {{- end  }}
 {{- if .Values.db.schemaRecreateRegularCheck }}
           - "-Ddbschema.auto-recreate.enabled=true"
@@ -170,11 +213,13 @@ spec:
           - "-Dquarkus.datasource.jdbc.url=jdbc:mariadb://db:3306/azul?useBulkStmt=true&rewriteBatchedStatements=true"
 {{- else }}
           - "-Dquarkus.datasource.jdbc.url=dummy-value"
+          - "-Dquarkus.datasource.\"<default>\".health-exclude=true"
           - "-Dquarkus.flyway.migrate-at-start=false"
 {{- end }}
           - "-Dquarkus.datasource.jdbc.max-size=100"
           - "-Dhazelcast.graceful.shutdown.max.wait=300"
           - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
+          - "-Dcodecache.eviction.interval={{ .Values.codeCache.cleaner.interval }}"
           - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
 {{- if .Values.cache.extraArguments }}
           {{- .Values.cache.extraArguments | toYaml | nindent 10 }}
@@ -206,10 +251,9 @@ spec:
 {{- else if .Values.cache.tolerations }}
       tolerations: {{- .Values.cache.tolerations | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.cache.affinity }}
+{{- if and ( ne true .Values.gateway.azureVirtualNodes ) .Values.cache.affinity }}
       affinity: {{- .Values.cache.affinity | toYaml | nindent 8 }}
 {{- end }}
-
 ---
 apiVersion: v1
 kind: Service

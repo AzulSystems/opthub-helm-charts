@@ -176,10 +176,27 @@ data:
                           - "*"
                         routes:
                           - match:
-                              prefix: "/"
+                              path: "/"
+                            direct_response:
+                              status: 200
+                              body:
+                                inline_string: "Azul Optimizer Hub - serves JVMs"
+                          # Internal /q/health endpoint routed to the gateway Quarkus /q/health endpoint
+                          # This is here for compatibility reasons. It is not the healtcheck intended to be used externally
+                          # to decide status of Opthub cluster, e.g. for the use by load balancers.
+                          - match:
+                               path: "/q/health"
                             route:
                               timeout: 600s
                               cluster: gateway_http
+                              prefix_rewrite: "/q/health"
+                          # Catch-all route for all other URLs
+                          - match:
+                              prefix: "/"    # Match all paths starting with "/"
+                            direct_response:
+                              status: 404
+                              body:
+                                inline_string: "no resource"
       - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
         name: listener_50051
         address:

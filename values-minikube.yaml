@@ -8,17 +8,6 @@ simpleSizing:
 
 autoscaler: false
 
-builtinStorage:
-  resources:
-    requests:
-      cpu:
-      memory:
-      ephemeral-storage: "1Gi"
-    limits:
-      cpu:
-      memory:
-      ephemeral-storage: "1Gi"
-
 gateway:
   resources:
 
@@ -47,3 +36,16 @@ db:
 
 operator:
   resources:
+
+
+storage:
+  blobStorageService: s3
+  s3:
+    commonBucket: opthub
+    credentialsType: "static"
+    storageEndpoint: http://minio.minio-dev.svc.cluster.local:9000
+
+secrets:
+  blobStorage:
+    accesskey: minioadmin
+    secretkey: minioadmin

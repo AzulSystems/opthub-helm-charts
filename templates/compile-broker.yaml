@@ -55,34 +55,44 @@ spec:
         command: {{- .Values.compileBroker.command | toYaml | nindent 8 }}
         {{- end }}
         env:
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
+{{- if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
+    {{- if eq "static" .Values.storage.s3.credentialsType }}
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: infrastructure-storage-credentials
-                key: minio-accesskey
+                name: blob-storage-credentials
+                key: blob-storage-accesskey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: infrastructure-storage-credentials
-                key: minio-secretkey
+                name: blob-storage-credentials
+                key: blob-storage-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
-{{- else if eq "s3" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: s3
+    {{- end }}
           - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-engines/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
           - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-artifacts/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-artifacts/
           - name: QUARKUS_S3_CLOUD_REGION
             value: {{ .Values.storage.s3.region }}
+{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
+          - name: BLOB_STORAGE_STORAGE_SERVICE
+            value: gcp-blob
+          - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.gcpBlob.commonBucket }}
+          - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
+          - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_BUCKET
+            value: {{ .Values.storage.gcpBlob.commonBucket }}
+          - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_PATH_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-artifacts/
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -107,11 +117,11 @@ spec:
           - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: COMPILER_COMPILE_ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-engines/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
           - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: COMPILER_COMPILER_ARTIFACT_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ .Release.Namespace }}/compiler-artifacts/
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-artifacts/
 {{- end }}
         args:
         - "-XX:+ExitOnOutOfMemoryError"
@@ -119,9 +129,9 @@ spec:
         - "-XX:-OmitStackTraceInFastThrow"
         - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
         - "-Dgraceful.shutdown.timeout={{ max 0 (sub .Values.compileBroker.terminationGracePeriodSeconds 5) }}"
-{{- if eq "builtin-storage" .Values.storage.blobStorageService }}
-        - "-Dquarkus.s3.endpoint-override=http://storage:9000"
-{{- end }}
+{{- if .Values.storage.s3.storageEndpoint }}
+        - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
+{{- end  }}
         - "-Dcompiler.parallelism={{ .Values.compilations.parallelism.limitPerCompileBroker }}"
         - "-Dcompiler.lookup-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}"
 {{- if .Values.compileBroker.extraArguments }}
@@ -138,18 +148,32 @@ spec:
         {{- if .Values.compileBroker.resources }}
         resources: {{- .Values.compileBroker.resources | toYaml | nindent 10 }}
         {{- end }}
+        {{- if ne true .Values.compileBroker.disableKubernetesProbes }}
         readinessProbe:
           httpGet:
             path: /q/health/ready
             port: http-endpoint
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
           periodSeconds: 10
+          failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /q/health/live
             port: http-endpoint
-          initialDelaySeconds: 60
-          periodSeconds: 10
+          initialDelaySeconds: 0
           timeoutSeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /q/health/started
+            port: http-endpoint
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 5
+          failureThreshold: 18
+        {{- end }}
       terminationGracePeriodSeconds: {{ .Values.compileBroker.terminationGracePeriodSeconds }}
       serviceAccountName: opthub-compile-broker
 {{- if eq true .Values.compileBroker.azureVirtualNodes }}
@@ -169,7 +193,7 @@ spec:
 {{- else if .Values.compileBroker.tolerations }}
       tolerations: {{- .Values.compileBroker.tolerations | toYaml | nindent 8 }}
 {{- end }}
-{{- if .Values.compileBroker.affinity }}
+{{- if and ( ne true .Values.compileBroker.azureVirtualNodes ) .Values.compileBroker.affinity }}
       affinity: {{- .Values.compileBroker.affinity | toYaml | nindent 8 }}
 {{- end }}
 
