@@ -46,6 +46,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 1001
       {{- if .Values.mgmtGateway.spec }}
       {{- .Values.mgmtGateway.spec | toYaml | nindent 6 }}
       {{- end }}
@@ -53,6 +55,12 @@ spec:
         - name: mgmt-gateway
           image: {{ .Values.registry.opthub }}/opthub-mgmt-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.mgmtGateway.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
           {{- if .Values.mgmtGateway.command }}
           command: {{- .Values.mgmtGateway.command | toYaml | nindent 10 }}
           {{- end }}
@@ -182,6 +190,15 @@ spec:
             timeoutSeconds: 1
             periodSeconds: 5
             failureThreshold: 18
+{{- end }}
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+{{- if (((.Values.mgmtGateway).resources).limits) }}
+            sizeLimit: {{ get .Values.mgmtGateway.resources.limits "ephemeral-storage" }}
 {{- end }}
       serviceAccountName: opthub-mgmt-gateway
 {{- if eq true .Values.mgmtGateway.azureVirtualNodes }}

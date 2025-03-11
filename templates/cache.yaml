@@ -34,10 +34,18 @@ spec:
       {{- end }}
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 1001
       containers:
       - name: cache
         image: {{ .Values.registry.opthub }}/opthub-hazelcast:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.cache.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
         {{- if .Values.cache.command }}
         command: {{- .Values.cache.command | toYaml | nindent 8 }}
         {{- end }}
@@ -232,6 +240,15 @@ spec:
         {{- if .Values.cache.resources }}
         resources: {{- .Values.cache.resources | toYaml | nindent 10 }}
         {{- end }}
+        volumeMounts:
+          - name: tmp-volume
+            mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+{{- if (((.Values.cache).resources).limits) }}
+            sizeLimit: {{ get .Values.cache.resources.limits "ephemeral-storage" }}
+{{- end }}
       terminationGracePeriodSeconds: 300
       serviceAccountName: opthub-cache
 {{- if eq true .Values.cache.azureVirtualNodes }}

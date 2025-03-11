@@ -47,10 +47,18 @@ spec:
       {{- end }}
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 1001
       containers:
       - name: compile-broker
         image: {{ .Values.registry.opthub }}/opthub-compile-broker:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.compileBroker.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
         {{- if .Values.compileBroker.command }}
         command: {{- .Values.compileBroker.command | toYaml | nindent 8 }}
         {{- end }}
@@ -174,6 +182,15 @@ spec:
           periodSeconds: 5
           failureThreshold: 18
         {{- end }}
+        volumeMounts:
+          - name: tmp-volume
+            mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+{{- if (((.Values.compileBroker).resources).limits) }}
+            sizeLimit: {{ get .Values.compileBroker.resources.limits "ephemeral-storage" }}
+{{- end }}
       terminationGracePeriodSeconds: {{ .Values.compileBroker.terminationGracePeriodSeconds }}
       serviceAccountName: opthub-compile-broker
 {{- if eq true .Values.compileBroker.azureVirtualNodes }}

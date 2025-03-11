@@ -222,6 +222,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 1001
       {{- if .Values.gateway.spec }}
       {{- .Values.gateway.spec | toYaml | nindent 6 }}
       {{- end }}
@@ -229,6 +231,12 @@ spec:
       - name: gateway
         image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.gateway.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
         {{- if .Values.gateway.command }}
         command: {{- .Values.gateway.command | toYaml | nindent 8 }}
         {{- end }}
@@ -388,11 +396,20 @@ spec:
           failureThreshold: 18
         {{- end }}
         volumeMounts:
+          - name: tmp-volume
+            mountPath: /tmp
 {{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
           - mountPath: "/opt/ssl"
             name: ssl-cert
             readOnly: true
+{{- end }}
       volumes:
+        - name: tmp-volume
+          emptyDir:
+{{- if (((.Values.gateway).resources).limits) }}
+            sizeLimit: {{ get .Values.gateway.resources.limits "ephemeral-storage" }}
+{{- end }}
+{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
         - name: ssl-cert
           secret:
             secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}

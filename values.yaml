@@ -246,9 +246,11 @@ cache:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
       cpu: "7"
       memory: "28Gi"
+      ephemeral-storage: "1Gi"
     limits:
       cpu: "7"
       memory: "28Gi"
+      ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
   tolerations: {}
@@ -322,9 +324,11 @@ mgmtGateway:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
       cpu: "2"
       memory: "2Gi"
+      ephemeral-storage: "1Gi"
     limits:
       cpu: "2"
       memory: "2Gi"
+      ephemeral-storage: "1Gi"
   service:
     type: "LoadBalancer"
     httpEndpoint:

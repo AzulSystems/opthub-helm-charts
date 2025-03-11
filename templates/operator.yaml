@@ -90,10 +90,18 @@ spec:
       {{- end }}
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 1001
       containers:
         - name: operator
           image: {{ .Values.registry.opthub }}/opthub-operator:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.operator.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
           {{- if .Values.operator.command }}
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
           {{- end }}
@@ -153,7 +161,15 @@ spec:
             periodSeconds: 5
             failureThreshold: 10
           {{- end }}
-
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+{{- if (((.Values.operator).resources).limits) }}
+            sizeLimit: {{ get .Values.operator.resources.limits "ephemeral-storage" }}
+{{- end }}
       serviceAccountName: opthub-operator
 {{- if eq true .Values.operator.azureVirtualNodes }}
       nodeSelector:
