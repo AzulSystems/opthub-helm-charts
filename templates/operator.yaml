@@ -106,9 +106,12 @@ spec:
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
           {{- end }}
           args:
+            - -Dquarkus.hazelcast-client.cluster-members=cache:5701
             - -Dbroker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
+            - -Dbroker.enabled={{ .Values.compileBroker.enabled }}
             - -Dbroker.min-replicas={{ include "sizing.compileBroker.minReplicas" . }}
             - -Dbroker.max-replicas={{ include "sizing.compileBroker.maxReplicas" . }}
+            - -Dbroker.cores-per-instance={{ include "_sizing.broker.vCores" . }}
             - -Dbroker.scale-down.stabilization-window={{ .Values.operator.scaleDownStabilizationWindow }}
             - -Dtime-to-clear-backlog={{ .Values.operator.timeToClearOptimizationBacklog}}
             - -Dsession-balancing.enabled={{ .Values.operator.sessionBalancing.enabled}}
@@ -119,12 +122,14 @@ spec:
             - -Dscaling.cache.min-replicas={{ include "sizing.cache.minReplicas" . }}
             - -Dscaling.cache.max-replicas={{ include "sizing.cache.maxReplicas" . }}
             - -Dscaling.cache.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerCache }}
+            - -Dscaling.cache.cores-per-instance={{ include "_sizing.cache.vCores" . }}
 {{- end }}
 {{- if eq "operator" .Values.gateway.autoscaler.mode}}
             - -Dscaling.gateway.enabled={{ .Values.gateway.autoscaler.enabled }}
             - -Dscaling.gateway.min-replicas={{ include "sizing.gateway.minReplicas" . }}
             - -Dscaling.gateway.max-replicas={{ include "sizing.gateway.maxReplicas" . }}
             - -Dscaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
+            - -Dscaling.gateway.cores-per-instance={{ include "_sizing.gateway.vCores" . }}
 {{- end }}
 {{- if .Values.operator.extraArguments }}
   {{- .Values.operator.extraArguments | toYaml | nindent 12 }}
