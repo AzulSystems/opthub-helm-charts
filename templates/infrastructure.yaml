@@ -262,7 +262,7 @@ spec:
 {{- end  }}
         args:
         - "-XX:+ExitOnOutOfMemoryError"
-        - "-XX:MaxRAMPercentage=80"
+        - "-XX:MaxRAMPercentage=60"
         - "-XX:-OmitStackTraceInFastThrow"
         - "-Dvm.session-statistics.log.client-continuously-blocked-threshold={{ .Values.operator.timeToClearOptimizationBacklog}}"
 {{- if .Values.storage.s3.storageEndpoint }}
@@ -288,11 +288,6 @@ spec:
         - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
         - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
         - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
-        - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
-        - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
-        - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
-        - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
-        - "-Dreadynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}"
   {{- if .Values.gateway.resources }}
         - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
 {{- end}}

@@ -247,6 +247,13 @@ spec:
           - "-Dquarkus.datasource.jdbc.max-size=100"
 {{- end }}
           - "-Dhazelcast.graceful.shutdown.max.wait=300"
+          - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
+          - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
+          - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
+          - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
+          - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
+          - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+          - "-Dreadynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}"
           - "-Dinventory.eviction.enabled={{ .Values.inventory.enabled }}"
           - "-Dinventory.eviction.interval={{ .Values.inventory.cleaner.interval }}"
           - "-Dinventory.eviction.keep-unused-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
