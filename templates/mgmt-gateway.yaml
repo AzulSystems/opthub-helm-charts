@@ -72,13 +72,13 @@ spec:
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
+                  name: blob-storage-credentials
+                  key: blob-storage-accesskey
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
+                  name: blob-storage-credentials
+                  key: blob-storage-secretkey
             - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
               value: static
     {{- end }}
@@ -110,19 +110,19 @@ spec:
               value: {{ .Values.storage.azureBlob.endpoint }}
             - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
               value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
             - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
+                  name: azure-storage-credentials
+                  key: azure-storage-sas-token
   {{- end  }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
             - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
+                  name: azure-storage-credentials
+                  key: azure-storage-connection-string
   {{- end  }}
             - name: ENGINE_STORAGE_LOCATION_BUCKET
               value: {{ .Values.storage.azureBlob.container }}

@@ -1,0 +1,17 @@
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (ne "default-credentials" .Values.storage.azureBlob.authMethod) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-storage-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
+  azure-storage-sas-token: {{ .Values.secrets.azure.blobStorage.sasToken | b64enc }}
+  {{- end }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
+  azure-storage-connection-string: {{ .Values.secrets.azure.blobStorage.connectionString | b64enc }}
+  {{- end }}
+---
+{{- end }}

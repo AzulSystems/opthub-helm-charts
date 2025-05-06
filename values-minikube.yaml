@@ -15,7 +15,6 @@ gwProxy:
   resources:
 
 mgmtGateway:
-  enabled: false
   resources:
 
 compileBroker:
@@ -48,6 +47,5 @@ storage:
 
 secrets:
   blobStorage:
-    s3:
-      accesskey: minioadmin
-      secretkey: minioadmin
+    accesskey: minioadmin
+    secretkey: minioadmin

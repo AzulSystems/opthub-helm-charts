@@ -117,13 +117,13 @@ spec:
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
+                name: blob-storage-credentials
+                key: blob-storage-accesskey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
+                name: blob-storage-credentials
+                key: blob-storage-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
     {{- end }}
@@ -139,14 +139,6 @@ spec:
             value: {{ .Values.storage.s3.commonBucket }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
-          - name: SCALING_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: SCALING_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}scaling/
-          - name: INVENTORY_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: INVENTORY_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}inventory/
           - name: QUARKUS_S3_CLOUD_REGION
             value: {{ .Values.storage.s3.region }}
 {{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
@@ -164,14 +156,7 @@ spec:
             value: {{ .Values.storage.gcpBlob.commonBucket }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
-          - name: SCALING_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: SCALING_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}scaling/
-          - name: INVENTORY_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: INVENTORY_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}inventory/
+
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -179,19 +164,19 @@ spec:
             value: {{ .Values.storage.azureBlob.endpoint }}
           - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
             value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
           - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
+                name: azure-storage-credentials
+                key: azure-storage-sas-token
   {{- end }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
           - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
+                name: azure-storage-credentials
+                key: azure-storage-connection-string
   {{- end  }}
           - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
@@ -205,26 +190,18 @@ spec:
             value: {{ .Values.storage.azureBlob.container }}
           - name: MAPLOADERS_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}code-cache/
-          - name: SCALING_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: SCALING_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}scaling/
-          - name: INVENTORY_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: INVENTORY_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}inventory/
 {{- end  }}
 {{- if eq true .Values.db.enabled }}
           - name: QUARKUS_DATASOURCE_USERNAME
             valueFrom:
               secretKeyRef:
-                name: {{ include "db.secretName" . }}
-                key: {{ .Values.secrets.db.userNameSecretKey }}
+                name: infrastructure-credentials
+                key: mariadb-username
           - name: QUARKUS_DATASOURCE_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: {{ include "db.secretName" . }}
-                key: {{ .Values.secrets.db.passwordSecretKey }}
+                name: infrastructure-credentials
+                key: mariadb-password
 {{- end }}
         args:
           - "-XX:InitialRAMPercentage=80"
@@ -242,14 +219,20 @@ spec:
 {{- end }}
 {{- if eq true .Values.db.enabled }}
           - "-Dquarkus.datasource.jdbc.url=jdbc:mariadb://db:3306/azul?useBulkStmt=true&rewriteBatchedStatements=true"
-          - "-Dquarkus.flyway.migrate-at-start=true"
-          - "-Dquarkus.datasource.\"<default>\".health-exclude=false"
-          - "-Dquarkus.datasource.jdbc.max-size=100"
+{{- else }}
+          - "-Dquarkus.datasource.jdbc.url=dummy-value"
+          - "-Dquarkus.datasource.\"<default>\".health-exclude=true"
+          - "-Dquarkus.flyway.migrate-at-start=false"
 {{- end }}
+          - "-Dquarkus.datasource.jdbc.max-size=100"
           - "-Dhazelcast.graceful.shutdown.max.wait=300"
-          - "-Dinventory.eviction.enabled={{ .Values.inventory.enabled }}"
-          - "-Dinventory.eviction.interval={{ .Values.inventory.cleaner.interval }}"
-          - "-Dinventory.eviction.keep-unused-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+          - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
+          - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
+          - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
+          - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
+          - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
+          - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
+          - "-Dreadynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}"
           - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
           - "-Dcodecache.eviction.interval={{ .Values.codeCache.cleaner.interval }}"
           - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
