@@ -250,51 +250,9 @@ readyNowOrchestrator.promotion.
 {{- end -}}
 
 
-{{- define "validateRequiredValues" -}}
-{{- if not .Values.storage.blobStorageService }}
-{{- required "Error: value storage.blobStorageService is required. Please see documentation for more details." .Values.storage.blobStorageService -}}
-{{- else if not (typeOf .Values.storage.blobStorageService | eq "string") }}
-{{- fail "Error: value storage.blobStorageService must be a string." -}}
-{{- else if not (has .Values.storage.blobStorageService (list "s3" "azure-blob" "gcp-blob")) }}
-{{- fail "Error: value storage.blobStorageService must be one of the following: s3, azure-blob, gcp-blob." -}}
-{{- end }}
-{{- end -}}
-
 
 {{- define "storageLocationPathPrefixWithNamespace" -}}
 {{- if .Values.storage.pathPrefix -}}
 {{- .Values.storage.pathPrefix | replace "%namespace%" .Release.Namespace -}}/
 {{- end -}}
-{{- end -}}
-
-{{- define "blobStorage.s3.secretName" -}}
-  {{- if .Values.secrets.blobStorage.s3.existingSecret -}}
-    {{ .Values.secrets.blobStorage.s3.existingSecret }}
-  {{- else -}}
-    {{ "blob-storage-credentials" }}
-  {{- end -}}
-{{- end -}}
-
-{{- define "db.secretName" -}}
-  {{- if .Values.secrets.db.existingSecret -}}
-    {{ .Values.secrets.db.existingSecret }}
-  {{- else -}}
-    {{ "infrastructure-credentials" }}
-  {{- end -}}
-{{- end -}}
-
-{{- define "azure.storage.secretName" -}}
-  {{- if .Values.secrets.blobStorage.azure.existingSecret -}}
-    {{ .Values.secrets.blobStorage.azure.existingSecret }}
-  {{- else -}}
-    {{ "azure-storage-credentials" }}
-  {{- end -}}
-{{- end -}}
-
-{{- define "ssl.secretName" -}}
-  {{- if .Values.ssl.existingSecret -}}
-    {{ .Values.ssl.existingSecret }}
-  {{- else -}}
-    {{ "gateway-ssl-secret" }}
-  {{- end -}}
 {{- end -}}

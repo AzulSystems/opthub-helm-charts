@@ -1,4 +1,3 @@
-{{- include "validateRequiredValues" . }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -12,6 +11,30 @@ metadata:
 
 
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: infrastructure-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  mariadb-password: {{ .Values.secrets.db.password | b64enc }}
+  mariadb-username: {{ .Values.secrets.db.username | b64enc }}
+---
+
+{{- if and (eq "s3" .Values.storage.blobStorageService) (eq "static" .Values.storage.s3.credentialsType) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: blob-storage-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  blob-storage-accesskey: {{ .Values.secrets.blobStorage.accesskey | b64enc }}
+  blob-storage-secretkey: {{ .Values.secrets.blobStorage.secretkey | b64enc }}
+---
+{{- end }}
+
 
 {{- if eq true .Values.db.enabled }}
 apiVersion: apps/v1
@@ -61,13 +84,13 @@ spec:
           - name: "MARIADB_USER"
             valueFrom:
               secretKeyRef:
-                name: {{ include "db.secretName" . }}
-                key: {{ .Values.secrets.db.userNameSecretKey }}
+                name: infrastructure-credentials
+                key: mariadb-username
           - name: "MARIADB_PASSWORD"
             valueFrom:
               secretKeyRef:
-                name: {{ include "db.secretName" . }}
-                key: {{ .Values.secrets.db.passwordSecretKey }}
+                name: infrastructure-credentials
+                key: mariadb-password
           - name: "MARIADB_RANDOM_ROOT_PASSWORD"
             value: "true"
         args:
@@ -141,6 +164,32 @@ spec:
     app: db
 {{- end }}
 
+{{- if and .Values.ssl.enabled (eq "" .Values.ssl.secretName) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gateway-ssl-secret
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  cert.pem: |-
+{{- if .Values.ssl.value.cert }}
+    {{ .Values.ssl.value.cert | b64enc }}
+{{- else }}
+    {{ .Files.Get (printf "%s" .Values.ssl.path.cert) | b64enc }}
+{{- end }}
+  key.pem: |-
+{{- if .Values.ssl.value.key }}
+    {{ .Values.ssl.value.key | b64enc }}
+{{- else }}
+    {{ .Files.Get (printf "%s" .Values.ssl.path.key) | b64enc }}
+{{- end }}
+{{- if .Values.ssl.mtls.enabled }}
+  client-truststore.p12: |-
+    {{ .Files.Get (printf "%s" .Values.ssl.mtls.truststore) | b64enc }}
+{{- end }}
+{{- end }}
 
 ---
 apiVersion: apps/v1
@@ -199,13 +248,13 @@ spec:
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
+                name: blob-storage-credentials
+                key: blob-storage-accesskey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
+                name: blob-storage-credentials
+                key: blob-storage-secretkey
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
     {{- end }}
@@ -237,19 +286,19 @@ spec:
             value: {{ .Values.storage.azureBlob.endpoint }}
           - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
             value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.sasToken }}
           - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
+                name: azure-storage-credentials
+                key: azure-storage-sas-token
   {{- end  }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.azure.blobStorage.connectionString }}
           - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
+                name: azure-storage-credentials
+                key: azure-storage-connection-string
   {{- end  }}
           - name: ENGINE_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
@@ -274,7 +323,6 @@ spec:
         - "-Dcompilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}"
         - "-Dcompilation.limit.vm-min-version={{ .Values.compilations.minVmVersionForCNCCompilation }}"
         - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
-        - "-Dvm.sessions.persist-to-inventory={{ .Values.inventory.enabled }}"
         - "-Dreadynoworchestrator.debug-info-history-length={{ .Values.readyNowOrchestrator.debugInfoHistoryLength }}"
         - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
         - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
@@ -359,7 +407,7 @@ spec:
 {{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
         - name: ssl-cert
           secret:
-            secretName: {{ include "ssl.secretName" . }}
+            secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
 {{- end }}
       serviceAccountName: opthub-gateway
 {{- if eq true .Values.gateway.azureVirtualNodes }}

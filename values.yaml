@@ -29,53 +29,20 @@ simpleSizing:
     brokersPerGateway: 4
     brokersPerCache: 100
 
-# Secrets used by helm chart. Secrets are created by helm chart when default config is used.
-#
-# It is possible to provide name of existing secret. This secret needs to be in same namespace as the namespace
-# used by Helm. This secret will then be used instead of creating new one.
-
 secrets:
   db:
-    # name of existing Secret object to use. New Secret is created if name is empty
-    existingSecret: ""
-
-    # name of *key* for `username` value in Secret. It can be renamed to match names in existing Secret
-    userNameSecretKey: mariadb-username
-    # default value for db.username - used when new secret is created
     username: "username"
-
-
-    # name of *key* for `password` value in Secret. It can be renamed to match names in existing Secret
-    passwordSecretKey: mariadb-password
-    # default value for db.password - used when new secret is created
     password: "password"
   blobStorage:
-    s3:
-      # name of existing Secret object to use. New Secret is created if name is empty
-      existingSecret: ""
+    accesskey: <yourAccessKey>
+    secretkey: <yourSecretKey>
+  azure:
+    blobStorage:
+      # connectionString: "<connection-string>"  # For authMethod: connection-string, get connection-string on
+      # Azure Portal > Storage accounts > {storage_account_name} > Access keys
 
-      # name of *key* for `accessKey` value in K8S Secret. It can be renamed to match names in existing Secret
-      accessKeySecretKey: blob-storage-accesskey
-      # default value for accesskey - used when new secret is created
-      accesskey: <yourAccessKey>
-
-      # name of *key* for `secretkey` value in K8S Secret. It can be renamed to match names in existing Secret
-      secretAccessKeySecretKey: blob-storage-secretkey
-      # default value for db.secretkey - used when new secret is created
-      secretkey: <yourSecretKey>
-    azure:
-      # name of existing Secret object to use. New Secret is created if name is empty
-      existingSecret: ""
-
-      # name of *key* for `connectionStringSecretKey` value in K8S Secret. It can be renamed to match names in existing Secret
-      connectionStringSecretKey: azure-storage-connection-string
-      # connectionString: "<connection-string>" . For authMethod: connection-string,
-      # get connection-string on Azure Portal > Storage accounts > {storage_account_name} > Access keys
-
-      # name of *key* for `sasTokenSecretKey` in K8S Secret. It can be renamed to match names in existing Secret
-      sasTokenSecretKey: azure-storage-sas-token
-      # sasToken: "<sas-token>"  # For authMethod: sas-token,
-      # Get sas-token on Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
+      # sasToken: "<sas-token>"  # For authMethod: sas-token, Get sas-token on
+      # Azure Portal > Storage accounts > {storage_account_name} > {blob_container} > Shared access tokens
 
 deployment:
   serviceAccount:
@@ -90,7 +57,7 @@ ssl:
   path:
     cert: "cert.pem"
     key: "key.pem"
-  existingSecret: ""
+  secretName: ""
   mtls:
     enabled: false
     truststore: "client-truststore.p12"
@@ -142,11 +109,6 @@ codeCache:
     offloadReadOperations: true
     writeBehindStorageMethod: true
 
-inventory:
-  enabled: true
-  cleaner:
-    interval: PT7M
-
 synchronization:
   enabled: true
   # comma separated list of URLs pointing to REST API of other peers,
@@ -156,7 +118,7 @@ synchronization:
   period: "PT30s"
 
 storage:
-  blobStorageService:  # Required value. Available options: s3, azure-blob, gcp-blob
+  blobStorageService: s3 # available options: s3, azure-blob, gcp-blob
   pathPrefix: "%namespace%" # string %namespace% will be replaced by K8S namespace, it can be extended ("%namespace%/test1") or used without namespace ("test2")
   azureBlob:
     endpoint: https://<yourendpoint>.blob.core.windows.net
@@ -356,7 +318,7 @@ operator:
     #environment: "dev"
 
 mgmtGateway:
-  enabled: true
+  enabled: false
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.

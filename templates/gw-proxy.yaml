@@ -190,12 +190,6 @@ data:
                               timeout: 600s
                               cluster: gateway_http
                               prefix_rewrite: "/q/health"
-                          - match:
-                               path: "/opthub-health"
-                            route:
-                              timeout: 600s
-                              cluster: gateway_http
-                              prefix_rewrite: "/api/opthub-health/healthy"
                           # Catch-all route for all other URLs
                           - match:
                               prefix: "/"    # Match all paths starting with "/"
@@ -356,7 +350,7 @@ spec:
 {{- if .Values.ssl.enabled }}
         - name: ssl-cert
           secret:
-            secretName: {{ include "ssl.secretName" . }}
+            secretName: {{ default "gateway-ssl-secret" .Values.ssl.secretName }}
 {{- end }}
 {{- if eq true .Values.gwProxy.azureVirtualNodes }}
       nodeSelector:
