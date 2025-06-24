@@ -1,15 +1,17 @@
 {{- include "validateRequiredValues" . }}
+
+{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.gateway.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: opthub-gateway
+  name: {{ include "gateway.serviceAccount" . }}
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
+{{- end }}
 
 ---
 
@@ -361,7 +363,7 @@ spec:
           secret:
             secretName: {{ include "ssl.secretName" . }}
 {{- end }}
-      serviceAccountName: opthub-gateway
+      serviceAccountName: {{ include "gateway.serviceAccount" . }}
 {{- if eq true .Values.gateway.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent

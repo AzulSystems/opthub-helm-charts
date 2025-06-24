@@ -1,10 +1,9 @@
-{{- if .Values.mgmtGateway }}
-{{- if .Values.mgmtGateway.enabled }}
+{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.mgmtGateway.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: opthub-mgmt-gateway
+  name: {{ include "mgmtGateway.serviceAccount" . }}
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -14,7 +13,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -200,7 +199,7 @@ spec:
 {{- if (((.Values.mgmtGateway).resources).limits) }}
             sizeLimit: {{ get .Values.mgmtGateway.resources.limits "ephemeral-storage" }}
 {{- end }}
-      serviceAccountName: opthub-mgmt-gateway
+      serviceAccountName: {{ include "mgmtGateway.serviceAccount" . }}
 {{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
@@ -244,5 +243,3 @@ spec:
       targetPort: 8080
   selector:
     app: mgmt-gateway
-{{- end }}
-{{- end }}

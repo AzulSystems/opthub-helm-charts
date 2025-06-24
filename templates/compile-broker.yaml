@@ -1,8 +1,9 @@
+{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.compileBroker.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: opthub-compile-broker
+  name: {{ include "compileBroker.serviceAccount" . }}
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -12,6 +13,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+{{- end }}
 ---
 {{- if and .Values.compileBroker .Values.compileBroker.enabled}}
 apiVersion: apps/v1
@@ -192,7 +194,7 @@ spec:
             sizeLimit: {{ get .Values.compileBroker.resources.limits "ephemeral-storage" }}
 {{- end }}
       terminationGracePeriodSeconds: {{ .Values.compileBroker.terminationGracePeriodSeconds }}
-      serviceAccountName: opthub-compile-broker
+      serviceAccountName: {{ include "compileBroker.serviceAccount" . }}
 {{- if eq true .Values.compileBroker.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
