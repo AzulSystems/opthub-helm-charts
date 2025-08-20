@@ -1,9 +1,10 @@
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.mgmtGateway.existingServiceAccount)}}
+{{- if .Values.mgmtGateway }}
+{{- if .Values.mgmtGateway.enabled }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "mgmtGateway.serviceAccount" . }}
+  name: opthub-mgmt-gateway
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -13,7 +14,7 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -133,6 +134,8 @@ spec:
               value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- end  }}
           args:
+            - "-XX:+ExitOnOutOfMemoryError"
+            - "-XX:MaxRAMPercentage=60"
             - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
 {{- if .Values.storage.s3.storageEndpoint }}
             - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
@@ -199,7 +202,7 @@ spec:
 {{- if (((.Values.mgmtGateway).resources).limits) }}
             sizeLimit: {{ get .Values.mgmtGateway.resources.limits "ephemeral-storage" }}
 {{- end }}
-      serviceAccountName: {{ include "mgmtGateway.serviceAccount" . }}
+      serviceAccountName: opthub-mgmt-gateway
 {{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
@@ -243,3 +246,5 @@ spec:
       targetPort: 8080
   selector:
     app: mgmt-gateway
+{{- end }}
+{{- end }}

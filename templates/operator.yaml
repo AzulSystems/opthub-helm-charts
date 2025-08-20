@@ -1,11 +1,9 @@
 {{- if and .Values.autoscaler .Values.compileBroker.autoscaler.enabled}}
-
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.operator.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "operator.serviceAccount" . }}
+  name: opthub-operator
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -15,9 +13,8 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
----
 
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -56,7 +53,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: {{ include "operator.serviceAccount" . }}
+    name: opthub-operator
     namespace: {{ .Release.Namespace }}
 
 ---
@@ -109,6 +106,8 @@ spec:
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
           {{- end }}
           args:
+            - -XX:+ExitOnOutOfMemoryError
+            - -XX:MaxRAMPercentage=60
             - -Dquarkus.hazelcast-client.cluster-members=cache:5701
             - -Dbroker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
             - -Dbroker.enabled={{ .Values.compileBroker.enabled }}
@@ -178,7 +177,7 @@ spec:
 {{- if (((.Values.operator).resources).limits) }}
             sizeLimit: {{ get .Values.operator.resources.limits "ephemeral-storage" }}
 {{- end }}
-      serviceAccountName: {{ include "operator.serviceAccount" . }}
+      serviceAccountName: opthub-operator
 {{- if eq true .Values.operator.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
