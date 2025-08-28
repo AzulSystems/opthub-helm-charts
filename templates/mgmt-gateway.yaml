@@ -133,6 +133,8 @@ spec:
               value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- end  }}
           args:
+            - "-XX:+ExitOnOutOfMemoryError"
+            - "-XX:MaxRAMPercentage=60"
             - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
 {{- if .Values.storage.s3.storageEndpoint }}
             - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"

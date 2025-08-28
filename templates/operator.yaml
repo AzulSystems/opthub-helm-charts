@@ -109,6 +109,8 @@ spec:
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
           {{- end }}
           args:
+            - -XX:+ExitOnOutOfMemoryError
+            - -XX:MaxRAMPercentage=60
             - -Dquarkus.hazelcast-client.cluster-members=cache:5701
             - -Dbroker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
             - -Dbroker.enabled={{ .Values.compileBroker.enabled }}
