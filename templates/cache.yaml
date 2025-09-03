@@ -281,7 +281,7 @@ spec:
             sizeLimit: {{ get .Values.cache.resources.limits "ephemeral-storage" }}
 {{- end }}
       terminationGracePeriodSeconds: 300
-      serviceAccountName: {{ include "cache.serviceAccount" . }}
+      serviceAccountName: opthub-cache
 {{- if eq true .Values.cache.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
@@ -359,13 +359,11 @@ spec:
 
 {{- end }}
 {{- end }}
-
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.cache.existingServiceAccount) }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "cache.serviceAccount" . }}
+  name: opthub-cache
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -375,7 +373,6 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -407,5 +404,5 @@ roleRef:
   name: opthub-cache-role
 subjects:
   - kind: ServiceAccount
-    name: {{ include "cache.serviceAccount" . }}
+    name: opthub-cache
     namespace: {{ .Release.Namespace }}
