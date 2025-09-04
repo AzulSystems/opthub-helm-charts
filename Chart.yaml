@@ -4,5 +4,5 @@ name: azul-opthub
 description: "Azul Intelligence Cloud: Optimizer Hub"
 home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
 icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
-version: "25.05.1"
-appVersion: "25.05.1"
+version: "1.11.5"
+appVersion: "1.11.5"
