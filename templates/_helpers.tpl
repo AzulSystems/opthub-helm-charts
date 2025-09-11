@@ -5,9 +5,18 @@ so this is the static value that will always be the same,
 except when manually tuned.
 */}}
 {{- define "_sizing.nonScalingComponents.vCores" -}}
-{{- $dbCpu := .Values.db.resources.requests.cpu -}}
-{{- $dbReplicas := .Values.db.replicas -}}
-{{- mulf $dbCpu $dbReplicas -}}
+{{- $staticVcores := 0 -}}
+{{- if and ((.Values.logStore).enabled) (eq ((.Values.logStore).deploymentMode) "dedicatedService") -}}
+{{- $logStoresVcores := .Values.logStore.resources.requests.cpu -}} {{/* only one replica of log-store for now */}}
+{{- addf $staticVcores $logStoresVcores -}}
+{{- else -}}
+{{- if ((.Values.taskExecutor).enabled) -}}
+{{- $taskExecutorVcores := .Values.taskExecutor.resources.requests.cpu -}} {{/* only one replica of task-executor for now */}}
+{{- addf $staticVcores $taskExecutorVcores -}}
+{{- else -}}
+{{- $staticVcores -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "_sizing.broker.vCores" -}}
@@ -143,29 +152,6 @@ type - one of "gateways", "caches" and "brokers" - indicates which replica amoun
 {{- mulf (trimSuffix $suffix . ) (get $sizes $suffix) | int -}}
 {{- end -}}
 
-{{/* get apropriate volume size(persistent or ephemeral) and "reserve" 1G for system on shared ephemeral volume */}}
-{{- define "_getDatabaseVolumeSpaceInB" -}}
-{{- if .Values.db.persistentDataVolume.enabled -}}
-{{- include "_getBytesFromResourceString" .Values.db.persistentDataVolume.size -}}
-{{- else -}}
-{{- sub (include "_getBytesFromResourceString" (get .Values.db.resources.requests "ephemeral-storage")) 1073741824 -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "_getDatabaseSizeInB" -}}
-{{- mulf (include "_getDatabaseVolumeSpaceInB" .) 0.9 | int -}}
-{{- end -}}
-
-{{- define "_getCodecacheEvictionTargetSizeInB" -}}
-{{- $targetSizeString := .Values.codeCache.cleaner.targetSize | toString -}}
-{{- if eq $targetSizeString "0" -}}
-{{- mulf (include "_getDatabaseVolumeSpaceInB" .) 0.9 0.6 | int -}}
-{{- else -}}
-{{- .Values.codeCache.cleaner.targetSize -}}
-{{- end -}}
-{{- end -}}
-
-
 {{- define "_getProfilesSpaceInB" -}}
 {{- include "_getBytesFromResourceString" .Values.readyNowOrchestrator.cleaner.externalPersistentStorageSoftLimit -}}
 {{- end -}}
@@ -275,14 +261,6 @@ readyNowOrchestrator.promotion.
   {{- end -}}
 {{- end -}}
 
-{{- define "db.secretName" -}}
-  {{- if .Values.secrets.db.existingSecret -}}
-    {{ .Values.secrets.db.existingSecret }}
-  {{- else -}}
-    {{ "infrastructure-credentials" }}
-  {{- end -}}
-{{- end -}}
-
 {{- define "azure.storage.secretName" -}}
   {{- if .Values.secrets.blobStorage.azure.existingSecret -}}
     {{ .Values.secrets.blobStorage.azure.existingSecret }}
@@ -337,6 +315,26 @@ readyNowOrchestrator.promotion.
     {{ .Values.deployment.serviceAccount.existingServiceAccount }}
   {{- else -}}
     {{ "opthub-gateway" }}
+  {{- end -}}
+{{- end -}}
+
+{{- define "logStore.serviceAccount" -}}
+  {{- if .Values.logStore.existingServiceAccount -}}
+    {{ .Values.logStore.existingServiceAccount }}
+  {{- else if .Values.deployment.serviceAccount.existingServiceAccount -}}
+    {{ .Values.deployment.serviceAccount.existingServiceAccount }}
+  {{- else -}}
+    {{ "opthub-log-store" }}
+  {{- end -}}
+{{- end -}}
+
+{{- define "taskExecutor.serviceAccount" -}}
+  {{- if .Values.taskExecutor.existingServiceAccount -}}
+    {{ .Values.taskExecutor.existingServiceAccount }}
+  {{- else if .Values.deployment.serviceAccount.existingServiceAccount -}}
+    {{ .Values.deployment.serviceAccount.existingServiceAccount }}
+  {{- else -}}
+    {{ "opthub-task-executor" }}
   {{- end -}}
 {{- end -}}
 

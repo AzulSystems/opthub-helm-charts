@@ -24,17 +24,6 @@ compileBroker:
 cache:
   resources:
 
-db:
-  resources:
-    requests:
-      cpu:
-      memory:
-      ephemeral-storage: "7Gi"
-    limits:
-      cpu:
-      memory:
-      ephemeral-storage: "7Gi"
-
 operator:
   resources:
 
