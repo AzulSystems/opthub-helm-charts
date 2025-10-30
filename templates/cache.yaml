@@ -54,7 +54,7 @@ spec:
           name: ch-server
         - containerPort: 8080
           name: metrics
-        - containerPort: {{ .Values.cache.ports.internalGrpcPort }}
+        - containerPort: 50071
           name: grpc
 
 {{- if ne true .Values.cache.disableKubernetesProbes }}
@@ -85,8 +85,16 @@ spec:
 {{- end }}
 
         env:
+{{- if eq "sqldb" .Values.codeCache.storageType }}
+          - name: MAPLOADERS_STORAGE_TYPE
+            value: sqldb
+{{- else if eq "blobstore" .Values.codeCache.storageType }}
           - name: MAPLOADERS_STORAGE_TYPE
             value: blobstore
+{{- else }}
+          - name: MAPLOADERS_STORAGE_TYPE
+            value: unsupported
+{{- end }}
 {{- if .Values.codeCache.storage.offloadReadOperations }}
           - name: MAPLOADERS_OFFLOAD_ENABLED
             value: "true"
@@ -206,6 +214,18 @@ spec:
           - name: INVENTORY_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}inventory/
 {{- end  }}
+{{- if eq true .Values.db.enabled }}
+          - name: QUARKUS_DATASOURCE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "db.secretName" . }}
+                key: {{ .Values.secrets.db.userNameSecretKey }}
+          - name: QUARKUS_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "db.secretName" . }}
+                key: {{ .Values.secrets.db.passwordSecretKey }}
+{{- end }}
         args:
           - "-XX:InitialRAMPercentage=80"
           - "-XX:MaxRAMPercentage=80"
@@ -217,7 +237,16 @@ spec:
 {{- if .Values.storage.s3.storageEndpoint }}
           - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
 {{- end  }}
-          - "-Dhazelcast.graceful.shutdown.max.wait={{ max 0 (sub .Values.cache.terminationGracePeriodSeconds 15) }}"
+{{- if .Values.db.schemaRecreateRegularCheck }}
+          - "-Ddbschema.auto-recreate.enabled=true"
+{{- end }}
+{{- if eq true .Values.db.enabled }}
+          - "-Dquarkus.datasource.jdbc.url=jdbc:mariadb://db:3306/azul?useBulkStmt=true&rewriteBatchedStatements=true"
+          - "-Dquarkus.flyway.migrate-at-start=true"
+          - "-Dquarkus.datasource.\"<default>\".health-exclude=false"
+          - "-Dquarkus.datasource.jdbc.max-size=100"
+{{- end }}
+          - "-Dhazelcast.graceful.shutdown.max.wait=300"
           - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
           - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
           - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
@@ -230,8 +259,7 @@ spec:
           - "-Dinventory.eviction.keep-unused-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
           - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
           - "-Dcodecache.eviction.interval={{ .Values.codeCache.cleaner.interval }}"
-          - "-Dcodecache.eviction.target-size={{ .Values.codeCache.cleaner.targetSize }}"
-          - "-Dquarkus.grpc.server.port={{ .Values.cache.ports.internalGrpcPort }}"
+          - "-Dcodecache.eviction.target-size={{ include "_getCodecacheEvictionTargetSizeInB" . }}"
 {{- if .Values.cache.extraArguments }}
           {{- .Values.cache.extraArguments | toYaml | nindent 10 }}
 {{- end }}
@@ -252,8 +280,8 @@ spec:
 {{- if (((.Values.cache).resources).limits) }}
             sizeLimit: {{ get .Values.cache.resources.limits "ephemeral-storage" }}
 {{- end }}
-      terminationGracePeriodSeconds: {{ .Values.cache.terminationGracePeriodSeconds }}
-      serviceAccountName: {{ include "cache.serviceAccount" . }}
+      terminationGracePeriodSeconds: 300
+      serviceAccountName: opthub-cache
 {{- if eq true .Values.cache.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
@@ -331,13 +359,11 @@ spec:
 
 {{- end }}
 {{- end }}
-
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.cache.existingServiceAccount) }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "cache.serviceAccount" . }}
+  name: opthub-cache
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -347,7 +373,6 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -379,5 +404,5 @@ roleRef:
   name: opthub-cache-role
 subjects:
   - kind: ServiceAccount
-    name: {{ include "cache.serviceAccount" . }}
+    name: opthub-cache
     namespace: {{ .Release.Namespace }}

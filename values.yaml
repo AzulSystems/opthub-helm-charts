@@ -16,12 +16,12 @@ simpleSizing:
   # CNC infrastructure components to best utilize given resources.
   # The default number is the amount of vCores necessary to start
   # one replica of each CNC component, so that the service is operational.
-  vCores: 32
+  vCores: 39
   # minVCores and maxVCores has the same formula as vCores, but applied
   # when autoscaling is enabled.
-  minVCores: 32
+  minVCores: 39
   # Default max is to allocate 10 compile brokers.
-  maxVCores: 106
+  maxVCores: 113
 
 
   # Do not change these values unless you change the required CNC pod sizing.
@@ -35,6 +35,20 @@ simpleSizing:
 # used by Helm. This secret will then be used instead of creating new one.
 
 secrets:
+  db:
+    # name of existing Secret object to use. New Secret is created if name is empty
+    existingSecret: ""
+
+    # name of *key* for `username` value in Secret. It can be renamed to match names in existing Secret
+    userNameSecretKey: mariadb-username
+    # default value for db.username - used when new secret is created
+    username: "username"
+
+
+    # name of *key* for `password` value in Secret. It can be renamed to match names in existing Secret
+    passwordSecretKey: mariadb-password
+    # default value for db.password - used when new secret is created
+    password: "password"
   blobStorage:
     s3:
       # name of existing Secret object to use. New Secret is created if name is empty
@@ -67,8 +81,6 @@ deployment:
   serviceAccount:
     labels: {}
     annotations: {}
-    existingServiceAccount: ""
-
 
 ssl:
   enabled: false
@@ -100,7 +112,7 @@ readyNowOrchestrator:
   completionGracePeriod: "PT180S"
   cache:
     enabled: true
-    maxSizeBytes: 0.5G
+    maxSizeBytes: 500000000
   producers:
     continueRecordingOnPromotion: false
     maxConcurrentRecordings: 10
@@ -108,9 +120,9 @@ readyNowOrchestrator:
     maxSynchronizedGeneration: 2
     maxProfileSize: 0
   promotion:
-    minProfileSize: 1M
+    minProfileSize: 1000000
     minProfileDuration: "PT2M"
-    minProfileSizePerGeneration: "0:1M,1:10M,2:25M,3:50M"
+    minProfileSizePerGeneration: "0:1000000,1:10000000,2:25000000,3:50000000"
     minProfileDurationPerGeneration: "0:PT2M,1:PT15M,2:PT30M,3:PT60M"
   cleaner:
     enabled: true
@@ -123,8 +135,9 @@ readyNowOrchestrator:
 codeCache:
   cleaner:
     enabled: true
-    targetSize: 100Gi
+    targetSize: "107374182400" # "107374182400" - 100GiB. Use quotes for large numbers.
     interval: PT2H
+  storageType: blobstore # use sqldb|blobstore
   storage:
     offloadReadOperations: true
     writeBehindStorageMethod: true
@@ -190,9 +203,6 @@ gateway:
     grpc:
       port: 50051
     # annotations: {}
-  ports:
-    serviceGrpcPort: 50051
-    internalGrpcPort: 50052
   tolerations: {}
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
@@ -200,7 +210,6 @@ gateway:
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
-  existingServiceAccount: ""
 
 gwProxy:
   enabled: true
@@ -234,7 +243,6 @@ gwProxy:
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
-  existingServiceAccount: ""
 
 compileBroker:
   enabled: true
@@ -263,7 +271,6 @@ compileBroker:
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
-  existingServiceAccount: ""
 
 cache:
   replicas: 1
@@ -272,7 +279,6 @@ cache:
     mode: operator
     min: 2
     max: 2
-  terminationGracePeriodSeconds: 300
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -292,9 +298,37 @@ cache:
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
-  existingServiceAccount: ""
-  ports:
-    internalGrpcPort: 50071
+
+db:
+  enabled: false
+  version: "11.4.3"
+  replicas: 1
+  schemaRecreateRegularCheck: false
+  resources:
+    requests:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "200Gi"
+    limits:
+      # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
+      cpu: "7"
+      memory: "28Gi"
+      ephemeral-storage: "200Gi"
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations: {}
+  affinity: {}
+  # when using persistent data volume make sure to lower ephemeral-storage allocation
+  persistentDataVolume:
+    enabled: false
+    size: "200Gi"
+    storageClassName: "" # empty string uses default storage class
+  applicationLabels: # Additional labels for Deployment/StatefulSet
+    #release: "stable"
+  podTemplateLabels: # Additional labels for POD
+    #environment: "dev"
+  serviceLabels: # Additional labels for Service
 
 operator:
   scaleDownStabilizationWindow: 120S
@@ -320,9 +354,9 @@ operator:
     #release: "stable"
   podTemplateLabels:
     #environment: "dev"
-  existingServiceAccount: ""
 
 mgmtGateway:
+  enabled: true
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -344,6 +378,5 @@ mgmtGateway:
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
-  existingServiceAccount: ""
 
 test: false
