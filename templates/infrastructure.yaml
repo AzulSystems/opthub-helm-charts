@@ -1,16 +1,144 @@
 {{- include "validateRequiredValues" . }}
-
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.gateway.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "gateway.serviceAccount" . }}
+  name: opthub-gateway
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+
+
+---
+
+{{- if eq true .Values.db.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: db
+    {{- if .Values.db.applicationLabels }}
+    {{- .Values.db.applicationLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.db.replicas }}
+  serviceName: db
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+        {{- if .Values.db.podTemplateLabels }}
+        {{- .Values.db.podTemplateLabels | toYaml | nindent 8 }}
+        {{- end }}
+      annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
+    spec:
+      {{- if .Values.db.spec }}
+      {{- .Values.db.spec | toYaml | nindent 6 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        fsGroupChangePolicy: OnRootMismatch
+        fsGroup: 999
+      containers:
+      - name: db
+        image: {{ .Values.registry.dockerhubMirror }}library/mariadb:{{ .Values.db.version }}
+{{- if .Values.db.command }}
+        command: {{- .Values.db.command | toYaml | nindent 8 }}
+{{- end }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+          - name: "MYSQL_DATABASE"
+            value: "azul"
+          - name: "MARIADB_USER"
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "db.secretName" . }}
+                key: {{ .Values.secrets.db.userNameSecretKey }}
+          - name: "MARIADB_PASSWORD"
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "db.secretName" . }}
+                key: {{ .Values.secrets.db.passwordSecretKey }}
+          - name: "MARIADB_RANDOM_ROOT_PASSWORD"
+            value: "true"
+        args:
+          - "--innodb_data_file_path=azuldb:{{ div (include "_getDatabaseSizeInB" .) 1_048_576 }}M"
+          - "--innodb_file_per_table=OFF"
+          - "--innodb-defragment=1"
+          - "--max_allowed_packet=256M"
+          - "--max_connections=6000"
+          - "--event-scheduler=ON"
+          - "--query_cache_type=1"
+          - "--query_cache_limit=10485760"
+          - "--query_cache_size=1048576000"
+        ports:
+          - containerPort: 3306
+{{- if .Values.db.resources }}
+        resources: {{- .Values.db.resources | toYaml | nindent 10 }}
+{{- end }}
+{{- if .Values.db.persistentDataVolume.enabled }}
+        volumeMounts:
+          - name: data
+            mountPath: "/var/lib/mysql"
+{{- end }}
+{{- if eq true .Values.db.azureVirtualNodes }}
+      nodeSelector:
+        kubernetes.io/role: agent
+        kubernetes.io/os: linux
+        type: virtual-kubelet
+{{- else if .Values.db.nodeSelector }}
+      nodeSelector: {{- .Values.db.nodeSelector | toYaml | nindent 8 }}
+{{- end }}
+{{- if eq true .Values.db.azureVirtualNodes }}
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule
+{{- else if .Values.db.tolerations }}
+      tolerations: {{- .Values.db.tolerations | toYaml | nindent 8 }}
+{{- end }}
+{{- if .Values.db.persistentDataVolume.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.db.persistentDataVolume.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.db.persistentDataVolume.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: db
+    {{- if .Values.db.serviceLabels }}
+    {{- .Values.db.serviceLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 3306
+      protocol: TCP
+      name: db-server
+  selector:
+    app: db
 {{- end }}
 
 
@@ -85,10 +213,6 @@ spec:
             value: {{ .Values.storage.s3.commonBucket }}
           - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.s3.commonBucket }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
@@ -102,10 +226,6 @@ spec:
             value: {{ .Values.storage.gcpBlob.commonBucket }}
           - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.gcpBlob.commonBucket }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
@@ -135,10 +255,6 @@ spec:
             value: {{ .Values.storage.azureBlob.container }}
           - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
             value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
             value: {{ .Values.storage.azureBlob.container }}
           - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
@@ -163,20 +279,18 @@ spec:
         - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
         - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
         - "-Dreadynoworchestrator.cache.enabled={{ .Values.readyNowOrchestrator.cache.enabled }}"
-        - "-Dreadynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes | toString }}"
+        - "-Dreadynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes | int64 }}"
         - "-Dreadynoworchestrator.producers.continue-recording-on-promotion={{ .Values.readyNowOrchestrator.producers.continueRecordingOnPromotion }}"
         - "-Dreadynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}"
         - "-Dreadynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
-        - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize | toString}}"
-        - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize | toString }}"
+        - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
+        - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize | int64 }}"
         - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
         - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
         - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
-        - "-Dinternal.grpc.server.port={{ .Values.gateway.ports.internalGrpcPort }}"
   {{- if .Values.gateway.resources }}
         - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
 {{- end}}
-        - "-Dquarkus.grpc.server.port={{ .Values.gateway.ports.serviceGrpcPort }}"
 {{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
         - "-Dquarkus.grpc.server.ssl.certificate=/opt/ssl/cert.pem"
         - "-Dquarkus.grpc.server.ssl.key=/opt/ssl/key.pem"
@@ -185,9 +299,6 @@ spec:
         - "-Dquarkus.grpc.server.ssl.trust-store=/opt/ssl/client-truststore.p12"
         - "-Dquarkus.grpc.server.ssl.trust-store-password={{ .Values.ssl.mtls.password }}"
 {{- end }}
-{{- end }}
-{{- if and ((.Values.logStore).enabled) (ne ((.Values.logStore).deploymentMode) "dedicatedService") }}
-        - "-Dlogstore.enabled=true"
 {{- end }}
 {{- if .Values.gateway.extraArguments }}
         {{- .Values.gateway.extraArguments | toYaml | nindent 8 }}
@@ -200,7 +311,7 @@ spec:
         ports:
         - containerPort: 8080
           name: http-endpoint
-        - containerPort: {{ .Values.gateway.ports.serviceGrpcPort }}
+        - containerPort: 50051
           name: grpc-external
 {{- if .Values.gateway.resources }}
         resources: {{- .Values.gateway.resources | toYaml | nindent 10 }}
@@ -250,7 +361,7 @@ spec:
           secret:
             secretName: {{ include "ssl.secretName" . }}
 {{- end }}
-      serviceAccountName: {{ include "gateway.serviceAccount" . }}
+      serviceAccountName: opthub-gateway
 {{- if eq true .Values.gateway.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent
@@ -297,7 +408,7 @@ spec:
     - name: grpc-server
       protocol: TCP
       port: {{ .Values.gateway.service.grpc.port }}
-      targetPort: {{ .Values.gateway.ports.serviceGrpcPort }}
+      targetPort: 50051
 {{- if  .Values.gwProxy.enabled }}
   selector:
     app: gw-proxy

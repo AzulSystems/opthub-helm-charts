@@ -1,11 +1,9 @@
 {{- if and .Values.autoscaler .Values.compileBroker.autoscaler.enabled}}
-
-{{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.operator.existingServiceAccount)}}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "operator.serviceAccount" . }}
+  name: opthub-operator
   namespace: {{ .Release.Namespace }}
   {{- with .Values.deployment.serviceAccount.labels }}
   labels:
@@ -15,9 +13,8 @@ metadata:
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-{{- end }}
----
 
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -43,6 +40,7 @@ rules:
     verbs:
       - get
       - list
+      - delete
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -56,7 +54,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 subjects:
   - kind: ServiceAccount
-    name: {{ include "operator.serviceAccount" . }}
+    name: opthub-operator
     namespace: {{ .Release.Namespace }}
 
 ---
@@ -136,10 +134,13 @@ spec:
             - -Dscaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
             - -Dscaling.gateway.cores-per-instance={{ include "_sizing.gateway.vCores" . }}
 {{- end }}
-            - -Dgateway.ports.internalGrpcPort={{ .Values.gateway.ports.internalGrpcPort }}
-            - -Dcache.ports.internalGrpcPort={{ .Values.cache.ports.internalGrpcPort }}
 {{- if .Values.operator.extraArguments }}
   {{- .Values.operator.extraArguments | toYaml | nindent 12 }}
+{{- end }}
+{{- if .Values.operator.extraArgumentsMap }}
+    {{- range $key, $val := .Values.operator.extraArgumentsMap }}
+            - -D{{ $key }}={{ $val }}
+    {{- end }}
 {{- end }}
           ports:
             - containerPort: 8080
@@ -182,7 +183,7 @@ spec:
 {{- if (((.Values.operator).resources).limits) }}
             sizeLimit: {{ get .Values.operator.resources.limits "ephemeral-storage" }}
 {{- end }}
-      serviceAccountName: {{ include "operator.serviceAccount" . }}
+      serviceAccountName: opthub-operator
 {{- if eq true .Values.operator.azureVirtualNodes }}
       nodeSelector:
         kubernetes.io/role: agent

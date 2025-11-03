@@ -13,6 +13,9 @@ compilations:
     limitPerVm: 0
     limitPerCompileBroker: 0
 
+db:
+  enabled: false
+
 codeCache:
   cleaner:
     enabled: false
