@@ -156,7 +156,7 @@ spec:
             - "-Dreadynoworchestrator.promotion.max-synchronized-generation={{ .Values.readyNowOrchestrator.producers.maxSynchronizedGeneration }}"
             - "-Dreadynoworchestrator.promotion.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
             - "-Dreadynoworchestrator.promotion.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
-            - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize | int64 }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize }}"
             - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
             - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
             - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
