@@ -137,8 +137,6 @@ spec:
             - -Dscaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
             - -Dscaling.gateway.cores-per-instance={{ include "_sizing.gateway.vCores" . }}
 {{- end }}
-            - -Dgateway.ports.internalGrpcPort={{ .Values.gateway.ports.internalGrpcPort }}
-            - -Dcache.ports.internalGrpcPort={{ .Values.cache.ports.internalGrpcPort }}
 {{- if .Values.operator.extraArguments }}
   {{- .Values.operator.extraArguments | toYaml | nindent 12 }}
 {{- end }}
