@@ -1,4 +1,14 @@
 {{/*
+Determines if the taskExecutor component should be deployed.
+It can be extended in the future if other features require it.
+*/}}
+{{- define "isTaskExecutorEnabled" -}}
+{{- with .Values.compStream -}}
+  {{- if .enabled -}}true{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 These components do not scale and there is currently no
 need for them to scale with the amount of compile brokers,
 so this is the static value that will always be the same,
@@ -10,7 +20,7 @@ except when manually tuned.
 {{- $logStoresVcores := .Values.logStore.resources.requests.cpu -}} {{/* only one replica of log-store for now */}}
 {{- addf $staticVcores $logStoresVcores -}}
 {{- else -}}
-{{- if ((.Values.taskExecutor).enabled) -}}
+{{- if (include "isTaskExecutorEnabled" .) -}}
 {{- $taskExecutorVcores := .Values.taskExecutor.resources.requests.cpu -}} {{/* only one replica of task-executor for now */}}
 {{- addf $staticVcores $taskExecutorVcores -}}
 {{- else -}}
@@ -246,6 +256,15 @@ readyNowOrchestrator.promotion.
 {{- end }}
 {{- end -}}
 
+{{- define "storageLocationBucket" -}}
+{{- if eq "s3" .Values.storage.blobStorageService -}}
+{{- .Values.storage.s3.commonBucket -}}
+{{- else if eq "gcp-blob" .Values.storage.blobStorageService -}}
+{{- .Values.storage.gcpBlob.commonBucket -}}
+{{- else if eq "azure-blob" .Values.storage.blobStorageService -}}
+{{- .Values.storage.azureBlob.container -}}
+{{- end  }}
+{{- end -}}
 
 {{- define "storageLocationPathPrefixWithNamespace" -}}
 {{- if .Values.storage.pathPrefix -}}

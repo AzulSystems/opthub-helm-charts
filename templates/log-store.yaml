@@ -27,6 +27,10 @@ metadata:
     {{- if .Values.logStore.applicationLabels }}
     {{- .Values.logStore.applicationLabels | toYaml | nindent 4 }}
     {{- end }}
+  {{- if .Values.logStore.applicationAnnotations }}
+  annotations:
+    {{- .Values.logStore.applicationAnnotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -44,6 +48,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
+        {{- if .Values.logStore.podTemplateAnnotations }}
+        {{- .Values.logStore.podTemplateAnnotations | toYaml | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -54,7 +61,7 @@ spec:
       {{- end }}
       containers:
       - name: log-store
-        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.logStore.versionSuffix }}
+        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.logStore.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
           readOnlyRootFilesystem: true
@@ -66,6 +73,10 @@ spec:
         command: {{- .Values.logStore.command | toYaml | nindent 8 }}
         {{- end }}
         env:
+          - name: DEFAULT_STORAGE_LOCATION_BUCKET
+            value: {{ include "storageLocationBucket" . }}
+          - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}
 {{- if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
@@ -85,17 +96,9 @@ spec:
     {{- end }}
           - name: QUARKUS_S3_CLOUD_REGION
             value: {{ .Values.storage.s3.region }}
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
 {{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: gcp-blob
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -117,10 +120,6 @@ spec:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
   {{- end  }}
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
 {{- end  }}
         args:
         - "-XX:+ExitOnOutOfMemoryError"

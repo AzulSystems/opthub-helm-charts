@@ -134,6 +134,22 @@ resources:
             initial_stream_window_size: 65536  # 64 KiB
             initial_connection_window_size: 1048576  # 1 MiB
     {{- end }}
+    {{- if .Values.grafana.enabled }}
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+    name: grafana_http
+    connect_timeout: 5s
+    per_connection_buffer_limit_bytes: 32768  # 32 KiB
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: grafana_http
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: grafana-headless
+                    port_value: 3000
+    {{- end }}
 {{- end }}
 {{- define "envoy.lds" -}}
 ---
@@ -187,6 +203,14 @@ resources:
               stream_idle_timeout: 600s
               request_timeout: 600s # 10 minutes for http endpoint requests
               http_filters:
+                - name: envoy.filters.http.health_check
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
+                    pass_through_mode: false
+                    headers:
+                      - name: ":path"
+                        string_match:
+                          exact: "/healthz"
                 - name: envoy.filters.http.router
                   typed_config:
                     "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -308,5 +332,43 @@ resources:
                     filename: "/opt/ssl/{{ .Values.ssl.path.cert }}"
                   private_key:
                     filename: "/opt/ssl/{{ .Values.ssl.path.key }}"
+{{- end }}
+{{- if .Values.grafana.enabled }}
+  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
+    name: listener_3000
+    address:
+      socket_address:
+        address: "::"
+        ipv4_compat: true
+        port_value: 3000
+    per_connection_buffer_limit_bytes: 32768  # 32 KiB
+    filter_chains:
+      - filters:
+          - name: envoy.filters.network.http_connection_manager
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+              codec_type: auto
+              stat_prefix: ingress_3000
+              http_filters:
+                - name: envoy.filters.http.router
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              access_log:
+                - name: envoy.access_loggers.file
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                    path: /dev/stdout
+              route_config:
+                name: grafana_route
+                virtual_hosts:
+                  - name: metrics
+                    domains:
+                      - "*"
+                    routes:
+                      - match:
+                          prefix: "/"
+                        route:
+                          timeout: 600s
+                          cluster: grafana_http
 {{- end }}
 {{- end }}

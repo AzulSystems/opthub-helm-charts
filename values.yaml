@@ -197,7 +197,9 @@ gateway:
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
+  podTemplateAnnotations: # Additional annotations for POD
     #environment: "dev"
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
@@ -231,8 +233,10 @@ gwProxy:
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
 
@@ -260,8 +264,10 @@ compileBroker:
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
 
@@ -289,8 +295,10 @@ cache:
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
   ports:
@@ -318,8 +326,10 @@ operator:
   affinity: {}
   applicationLabels:
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels:
     #environment: "dev"
+  podTemplateAnnotations: # Additional annotations for POD
   existingServiceAccount: ""
 
 mgmtGateway:
@@ -341,9 +351,18 @@ mgmtGateway:
     kubernetes.io/arch: amd64
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
     #environment: "dev"
+  podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
 
 test: false
+
+# Monitoring section
+grafana:
+  enabled: false
+
+prometheus:
+  enabled: false

@@ -25,6 +25,10 @@ metadata:
     {{- if .Values.gateway.applicationLabels }}
     {{- .Values.gateway.applicationLabels | toYaml | nindent 4 }}
     {{- end }}
+  {{- if .Values.gateway.applicationAnnotations }}
+  annotations:
+    {{- .Values.gateway.applicationAnnotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ include "sizing.gateway.replicas" . }}
   selector:
@@ -42,6 +46,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
+        {{- if .Values.gateway.podTemplateAnnotations }}
+        {{- .Values.gateway.podTemplateAnnotations | toYaml | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -52,7 +59,7 @@ spec:
       {{- end }}
       containers:
       - name: gateway
-        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.gateway.versionSuffix }}
+        image: {{ .Values.registry.opthub }}/opthub-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.gateway.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         securityContext:
           readOnlyRootFilesystem: true
@@ -64,6 +71,10 @@ spec:
         command: {{- .Values.gateway.command | toYaml | nindent 8 }}
         {{- end }}
         env:
+          - name: DEFAULT_STORAGE_LOCATION_BUCKET
+            value: {{ include "storageLocationBucket" . }}
+          - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
+            value: {{ include "storageLocationPathPrefixWithNamespace" . }}
 {{- if eq "s3" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: s3
@@ -81,35 +92,11 @@ spec:
           - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
             value: static
     {{- end }}
-          - name: ENGINE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.s3.commonBucket }}
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
           - name: QUARKUS_S3_CLOUD_REGION
             value: {{ .Values.storage.s3.region }}
 {{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: gcp-blob
-          - name: ENGINE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.gcpBlob.commonBucket }}
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
           - name: BLOB_STORAGE_STORAGE_SERVICE
             value: azure-blob
@@ -131,18 +118,6 @@ spec:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
   {{- end  }}
-          - name: ENGINE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: ENGINE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}compiler-engines/
-          - name: LOGSTORE_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: LOGSTORE_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}log-store/
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_BUCKET
-            value: {{ .Values.storage.azureBlob.container }}
-          - name: READYNOWORCHESTRATOR_STORAGE_LOCATION_PATH_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}persistent-profile/
 {{- end  }}
         args:
         - "-XX:+ExitOnOutOfMemoryError"
@@ -188,6 +163,9 @@ spec:
 {{- end }}
 {{- if and ((.Values.logStore).enabled) (ne ((.Values.logStore).deploymentMode) "dedicatedService") }}
         - "-Dlogstore.enabled=true"
+{{- end }}
+{{- if ((.Values.compStream).enabled) }}
+        - "-Dcompstream.enabled=true"
 {{- end }}
 {{- if .Values.gateway.extraArguments }}
         {{- .Values.gateway.extraArguments | toYaml | nindent 8 }}

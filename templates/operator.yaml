@@ -71,6 +71,10 @@ metadata:
     {{- if .Values.operator.applicationLabels }}
     {{- .Values.operator.applicationLabels | toYaml | nindent 4 }}
     {{- end }}
+  {{- if .Values.operator.applicationAnnotations }}
+  annotations:
+    {{- .Values.operator.applicationAnnotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -88,6 +92,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
+        {{- if .Values.operator.podTemplateAnnotations }}
+        {{- .Values.operator.podTemplateAnnotations | toYaml | nindent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.operator.spec }}
       {{- .Values.operator.spec | toYaml | nindent 6 }}
@@ -98,7 +105,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: operator
-          image: {{ .Values.registry.opthub }}/opthub-operator:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ .Values.operator.versionSuffix }}
+          image: {{ .Values.registry.opthub }}/opthub-operator:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.operator.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true

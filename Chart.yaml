@@ -4,5 +4,15 @@ name: azul-opthub
 description: "Azul Intelligence Cloud: Optimizer Hub"
 home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
 icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
-version: "25.08.1"
-appVersion: "25.08.1"
+version: "25.11.0-1"
+appVersion: "25.11.0-1"
+
+dependencies:
+  - name: prometheus
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 27.46.0
+    condition: prometheus.enabled
+  - name: grafana
+    repository: https://grafana.github.io/helm-charts
+    version: 8.10.4
+    condition: grafana.enabled

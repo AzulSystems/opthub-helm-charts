@@ -25,6 +25,10 @@ metadata:
     {{- if .Values.gwProxy.applicationLabels }}
     {{- .Values.gwProxy.applicationLabels | toYaml | nindent 4 }}
     {{- end }}
+  {{- if .Values.gwProxy.applicationAnnotations }}
+  annotations:
+    {{- .Values.gwProxy.applicationAnnotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.gwProxy.replicas }}
   strategy:
@@ -47,6 +51,9 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
         prometheus.io/path: "/stats/prometheus"
+        {{- if .Values.gwProxy.podTemplateAnnotations }}
+        {{- .Values.gwProxy.podTemplateAnnotations | toYaml | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -54,7 +61,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: gw-proxy
-          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.29-latest
+          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy-distroless:v1.35-latest
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
@@ -77,6 +84,28 @@ spec:
               containerPort: 8080
             - name: grpc
               containerPort: 50051
+              {{- if .Values.grafana.enabled }}
+            - name: grafana
+              containerPort: 3000
+              {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 4
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: "/etc/envoy"
