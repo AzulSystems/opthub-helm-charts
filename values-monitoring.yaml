@@ -49,7 +49,7 @@ prometheus:
       name: metrics-server
   server:
     fullnameOverride: prometheus-server
-    persistedVolume:
+    persistentVolume:
       enabled: false
     global:
       scrape_interval: 15s

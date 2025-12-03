@@ -1494,11 +1494,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -1507,6 +1509,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -1529,7 +1532,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1545,7 +1549,7 @@
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 8222
+            "y": 29
           },
           "id": 275,
           "options": {
@@ -1560,6 +1564,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -1590,11 +1595,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -1603,6 +1610,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -1625,7 +1633,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1641,7 +1650,7 @@
             "h": 8,
             "w": 6,
             "x": 6,
-            "y": 8222
+            "y": 29
           },
           "id": 276,
           "options": {
@@ -1656,6 +1665,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -1686,11 +1696,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -1699,6 +1711,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -1721,7 +1734,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1737,7 +1751,7 @@
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 8222
+            "y": 29
           },
           "id": 279,
           "options": {
@@ -1752,7 +1766,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "9.5.13",
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -1784,11 +1798,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 40,
                 "gradientMode": "none",
@@ -1797,6 +1813,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -1818,7 +1835,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1834,7 +1852,7 @@
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 8222
+            "y": 29
           },
           "id": 277,
           "options": {
@@ -1849,7 +1867,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "8.2.6",
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -1923,11 +1941,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -1936,6 +1956,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -1958,7 +1979,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1974,7 +1996,7 @@
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 8230
+            "y": 37
           },
           "id": 326,
           "options": {
@@ -1989,6 +2011,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -2019,11 +2042,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -2032,6 +2057,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -2054,7 +2080,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2095,7 +2122,7 @@
             "h": 8,
             "w": 6,
             "x": 6,
-            "y": 8230
+            "y": 37
           },
           "id": 325,
           "options": {
@@ -2110,6 +2137,7 @@
               "sort": "none"
             }
           },
+          "pluginVersion": "11.4.0",
           "targets": [
             {
               "datasource": {
@@ -2126,6 +2154,96 @@
             }
           ],
           "title": "Pod Failure Reason",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$DataSource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 6,
+            "x": 12,
+            "y": 37
+          },
+          "id": 386,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "editorMode": "code",
+              "exemplar": true,
+              "expr": "hz_operations_pending_invocations{cluster=\"$cluster\",kubernetes_namespace=\"$ns\"}",
+              "interval": "",
+              "legendFormat": "{{kubernetes_pod_name}}",
+              "queryType": "randomWalk",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Pending Hazelcast invocations",
           "type": "timeseries"
         }
       ],
@@ -2190,7 +2308,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2206,7 +2325,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 5382
+            "y": 30
           },
           "id": 317,
           "options": {
@@ -2286,7 +2405,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2302,7 +2422,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 5382
+            "y": 30
           },
           "id": 338,
           "options": {
@@ -2370,7 +2490,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 7435
+            "y": 39
           },
           "id": 319,
           "options": {
@@ -2416,7 +2536,7 @@
                 "uid": "${DataSource}"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(compilations_complete_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"gateway\", status=\"success\"}[$__interval]))\n",
+              "expr": "sum by (le) (increase(compilations_complete_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"gateway\", status=\"success\"}[$__rate_interval]))\n",
               "format": "heatmap",
               "legendFormat": "{{le}}",
               "range": true,
@@ -2475,7 +2595,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2491,7 +2612,7 @@
             "h": 9,
             "w": 6,
             "x": 12,
-            "y": 7435
+            "y": 39
           },
           "id": 337,
           "options": {
@@ -2590,7 +2711,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2606,7 +2728,7 @@
             "h": 9,
             "w": 6,
             "x": 18,
-            "y": 7435
+            "y": 39
           },
           "id": 339,
           "options": {
@@ -2705,7 +2827,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2721,7 +2844,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7444
+            "y": 48
           },
           "id": 286,
           "options": {
@@ -2802,7 +2925,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2818,7 +2942,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 7444
+            "y": 48
           },
           "id": 343,
           "options": {
@@ -2874,7 +2998,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7452
+            "y": 56
           },
           "id": 287,
           "options": {
@@ -2920,7 +3044,7 @@
                 "uid": "${DataSource}"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(grpc_call_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",app=\"gateway\",method=\"azul.remotecompiler.compilebroker.api.CompilationDispatcher/Dispatch\",status=\"OK\"}[$__interval]))",
+              "expr": "sum by (le) (increase(grpc_call_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",app=\"gateway\",method=\"azul.remotecompiler.compilebroker.api.CompilationDispatcher/Dispatch\",status=\"OK\"}[$__rate_interval]))",
               "format": "heatmap",
               "hide": false,
               "legendFormat": "{{le}}",
@@ -2980,7 +3104,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2996,7 +3121,7 @@
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 7452
+            "y": 56
           },
           "id": 342,
           "options": {
@@ -3089,7 +3214,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3105,7 +3231,7 @@
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 7452
+            "y": 56
           },
           "id": 344,
           "options": {
@@ -3198,7 +3324,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3214,7 +3341,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7460
+            "y": 64
           },
           "id": 62,
           "options": {
@@ -3317,7 +3444,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3333,7 +3461,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 7460
+            "y": 64
           },
           "id": 139,
           "options": {
@@ -3428,7 +3556,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3559,7 +3688,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7468
+            "y": 72
           },
           "id": 77,
           "options": {
@@ -3710,7 +3839,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3726,7 +3856,7 @@
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 7468
+            "y": 72
           },
           "id": 65,
           "options": {
@@ -3809,7 +3939,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3825,7 +3956,7 @@
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 7468
+            "y": 72
           },
           "id": 170,
           "options": {
@@ -3924,7 +4055,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -3966,7 +4098,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7476
+            "y": 80
           },
           "id": 84,
           "options": {
@@ -4072,7 +4204,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 7476
+            "y": 80
           },
           "id": 345,
           "options": {
@@ -4118,7 +4250,7 @@
                 "uid": "$DataSource"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(vmstate_cache_getAll_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\"}[$__interval]))",
+              "expr": "sum by (le) (increase(vmstate_cache_getAll_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\"}[$__rate_interval]))",
               "format": "heatmap",
               "hide": false,
               "interval": "",
@@ -4180,7 +4312,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -4196,7 +4329,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 7484
+            "y": 88
           },
           "id": 181,
           "options": {
@@ -4345,7 +4478,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -4476,7 +4610,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 7484
+            "y": 88
           },
           "id": 78,
           "options": {
@@ -4642,7 +4776,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -4658,7 +4793,7 @@
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 7492
+            "y": 96
           },
           "id": 48,
           "options": {
@@ -4740,7 +4875,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               },
@@ -4765,7 +4901,7 @@
             "h": 8,
             "w": 6,
             "x": 6,
-            "y": 7492
+            "y": 96
           },
           "id": 52,
           "options": {
@@ -4852,7 +4988,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -4868,7 +5005,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 7492
+            "y": 96
           },
           "id": 83,
           "options": {
@@ -5003,7 +5140,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5019,7 +5157,7 @@
             "h": 8,
             "w": 9,
             "x": 12,
-            "y": 7500
+            "y": 104
           },
           "id": 127,
           "options": {
@@ -5063,7 +5201,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5079,7 +5218,7 @@
             "h": 8,
             "w": 3,
             "x": 21,
-            "y": 7500
+            "y": 104
           },
           "id": 208,
           "options": {
@@ -5173,7 +5312,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5269,7 +5409,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5342,7 +5483,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 523
+            "y": 39
           },
           "id": 297,
           "options": {
@@ -5388,7 +5529,7 @@
                 "uid": "${DataSource}"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(storage_profile_download_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\", reason=\"success\"}[$__interval]))",
+              "expr": "sum by (le) (increase(storage_profile_download_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\", reason=\"success\"}[$__rate_interval]))",
               "format": "heatmap",
               "legendFormat": "{{le}}",
               "range": true,
@@ -5446,7 +5587,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5462,7 +5604,7 @@
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 523
+            "y": 39
           },
           "id": 300,
           "options": {
@@ -5566,7 +5708,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5582,7 +5725,7 @@
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 523
+            "y": 39
           },
           "id": 341,
           "options": {
@@ -5662,7 +5805,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 531
+            "y": 47
           },
           "id": 301,
           "options": {
@@ -5708,7 +5851,7 @@
                 "uid": "${DataSource}"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(storage_chunk_download_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",reason=\"success\"}[$__interval]))",
+              "expr": "sum by (le) (increase(storage_chunk_download_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",reason=\"success\"}[$__rate_interval]))",
               "format": "heatmap",
               "legendFormat": "{{le}}",
               "range": true,
@@ -5742,7 +5885,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 531
+            "y": 47
           },
           "id": 302,
           "options": {
@@ -5788,7 +5931,7 @@
                 "uid": "${DataSource}"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(storage_chunk_upload_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",reason=\"success\"}[$__interval]))",
+              "expr": "sum by (le) (increase(storage_chunk_upload_duration_seconds_bucket{cluster=\"$cluster\",kubernetes_namespace=\"$ns\",reason=\"success\"}[$__rate_interval]))",
               "format": "heatmap",
               "legendFormat": "{{le}}",
               "range": true,
@@ -5846,7 +5989,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5862,7 +6006,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 539
+            "y": 55
           },
           "id": 299,
           "options": {
@@ -5942,7 +6086,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -5958,7 +6103,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 539
+            "y": 55
           },
           "id": 298,
           "options": {
@@ -6064,7 +6209,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6080,7 +6226,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5384
+            "y": 32
           },
           "id": 294,
           "options": {
@@ -6160,7 +6306,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6176,7 +6323,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5384
+            "y": 32
           },
           "id": 293,
           "options": {
@@ -6257,7 +6404,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6273,7 +6421,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5756
+            "y": 40
           },
           "id": 291,
           "options": {
@@ -6353,7 +6501,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6369,7 +6518,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5756
+            "y": 40
           },
           "id": 295,
           "options": {
@@ -6461,7 +6610,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6477,7 +6627,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5764
+            "y": 48
           },
           "id": 290,
           "options": {
@@ -6558,7 +6708,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6574,7 +6725,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5764
+            "y": 48
           },
           "id": 292,
           "options": {
@@ -6668,7 +6819,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6776,7 +6928,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6884,7 +7037,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -6900,7 +7054,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 509
+            "y": 41
           },
           "id": 305,
           "options": {
@@ -7016,7 +7170,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7032,7 +7187,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 509
+            "y": 41
           },
           "id": 306,
           "options": {
@@ -7138,7 +7293,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7154,7 +7310,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5386
+            "y": 34
           },
           "id": 314,
           "options": {
@@ -7258,7 +7414,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7274,7 +7431,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5386
+            "y": 34
           },
           "id": 315,
           "options": {
@@ -7355,7 +7512,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7371,7 +7529,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5394
+            "y": 42
           },
           "id": 312,
           "options": {
@@ -7475,7 +7633,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7491,7 +7650,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5394
+            "y": 42
           },
           "id": 316,
           "options": {
@@ -7571,7 +7730,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7587,7 +7747,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 5402
+            "y": 50
           },
           "id": 313,
           "options": {
@@ -7667,7 +7827,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -7683,7 +7844,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 5402
+            "y": 50
           },
           "id": 311,
           "options": {
@@ -7777,7 +7938,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -8231,7 +8393,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -8323,7 +8486,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 171
+            "y": 43
           },
           "id": 346,
           "options": {
@@ -8398,7 +8561,7 @@
             "h": 8,
             "w": 3,
             "x": 12,
-            "y": 171
+            "y": 43
           },
           "id": 359,
           "options": {
@@ -8561,7 +8724,7 @@
             "h": 8,
             "w": 3,
             "x": 15,
-            "y": 171
+            "y": 43
           },
           "id": 367,
           "options": {
@@ -8709,7 +8872,7 @@
             "h": 8,
             "w": 3,
             "x": 18,
-            "y": 171
+            "y": 43
           },
           "id": 369,
           "options": {
@@ -8857,7 +9020,7 @@
             "h": 8,
             "w": 3,
             "x": 21,
-            "y": 171
+            "y": 43
           },
           "id": 368,
           "options": {
@@ -8950,7 +9113,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -8966,7 +9130,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 179
+            "y": 51
           },
           "id": 333,
           "options": {
@@ -9106,7 +9270,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9122,7 +9287,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 179
+            "y": 51
           },
           "id": 334,
           "options": {
@@ -9182,7 +9347,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 187
+            "y": 59
           },
           "id": 347,
           "options": {
@@ -9288,7 +9453,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9304,7 +9470,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 187
+            "y": 59
           },
           "id": 357,
           "options": {
@@ -9388,7 +9554,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9404,7 +9571,7 @@
             "h": 8,
             "w": 9,
             "x": 0,
-            "y": 195
+            "y": 67
           },
           "id": 353,
           "options": {
@@ -9466,7 +9633,7 @@
             "h": 8,
             "w": 3,
             "x": 9,
-            "y": 195
+            "y": 67
           },
           "id": 354,
           "options": {
@@ -9561,7 +9728,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9602,7 +9770,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 195
+            "y": 67
           },
           "id": 330,
           "options": {
@@ -9708,7 +9876,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9749,7 +9918,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 203
+            "y": 75
           },
           "id": 377,
           "options": {
@@ -9869,7 +10038,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9885,7 +10055,7 @@
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 2729
+            "y": 36
           },
           "id": 42,
           "options": {
@@ -9961,7 +10131,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -9977,7 +10148,7 @@
             "h": 8,
             "w": 9,
             "x": 6,
-            "y": 2729
+            "y": 36
           },
           "id": 67,
           "options": {
@@ -10055,7 +10226,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10071,7 +10243,7 @@
             "h": 8,
             "w": 9,
             "x": 15,
-            "y": 2729
+            "y": 36
           },
           "id": 96,
           "options": {
@@ -10152,7 +10324,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10168,7 +10341,7 @@
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 2737
+            "y": 44
           },
           "id": 14,
           "options": {
@@ -10253,7 +10426,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10269,7 +10443,7 @@
             "h": 8,
             "w": 9,
             "x": 6,
-            "y": 2737
+            "y": 44
           },
           "id": 68,
           "options": {
@@ -10398,7 +10572,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10414,7 +10589,7 @@
             "h": 8,
             "w": 9,
             "x": 15,
-            "y": 2737
+            "y": 44
           },
           "id": 97,
           "options": {
@@ -10510,7 +10685,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10526,7 +10702,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2746
+            "y": 37
           },
           "id": 183,
           "options": {
@@ -10643,7 +10819,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10659,7 +10836,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2746
+            "y": 37
           },
           "id": 91,
           "options": {
@@ -10753,7 +10930,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10769,7 +10947,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2754
+            "y": 45
           },
           "id": 118,
           "options": {
@@ -10875,7 +11053,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -10891,7 +11070,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2754
+            "y": 45
           },
           "id": 114,
           "options": {
@@ -10988,7 +11167,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11004,7 +11184,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2761
+            "y": 52
           },
           "id": 258,
           "options": {
@@ -11088,7 +11268,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11104,7 +11285,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2761
+            "y": 52
           },
           "id": 253,
           "options": {
@@ -11186,7 +11367,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11202,7 +11384,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2768
+            "y": 59
           },
           "id": 119,
           "options": {
@@ -11311,7 +11493,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11327,7 +11510,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2768
+            "y": 59
           },
           "id": 36,
           "options": {
@@ -11403,7 +11586,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11419,7 +11603,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2775
+            "y": 66
           },
           "id": 129,
           "options": {
@@ -11513,7 +11697,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11529,7 +11714,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2775
+            "y": 66
           },
           "id": 120,
           "options": {
@@ -11611,7 +11796,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11627,7 +11813,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2782
+            "y": 73
           },
           "id": 135,
           "options": {
@@ -11725,7 +11911,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11741,7 +11928,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2782
+            "y": 73
           },
           "id": 154,
           "options": {
@@ -11824,7 +12011,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11840,7 +12028,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2789
+            "y": 80
           },
           "id": 155,
           "options": {
@@ -11924,7 +12112,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -11940,7 +12129,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2789
+            "y": 80
           },
           "id": 162,
           "options": {
@@ -12024,7 +12213,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12040,7 +12230,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2796
+            "y": 87
           },
           "id": 163,
           "options": {
@@ -12124,7 +12314,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12140,7 +12331,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2796
+            "y": 87
           },
           "id": 176,
           "options": {
@@ -12224,7 +12415,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12240,7 +12432,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2803
+            "y": 94
           },
           "id": 175,
           "options": {
@@ -12352,7 +12544,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12368,7 +12561,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2747
+            "y": 38
           },
           "id": 124,
           "options": {
@@ -12476,7 +12669,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12492,7 +12686,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2747
+            "y": 38
           },
           "id": 82,
           "options": {
@@ -12589,7 +12783,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12605,7 +12800,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2754
+            "y": 45
           },
           "id": 255,
           "options": {
@@ -12690,7 +12885,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12706,7 +12902,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2754
+            "y": 45
           },
           "id": 260,
           "options": {
@@ -12789,7 +12985,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12805,7 +13002,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2761
+            "y": 52
           },
           "id": 130,
           "options": {
@@ -12899,7 +13096,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -12928,7 +13126,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2761
+            "y": 52
           },
           "id": 54,
           "options": {
@@ -13051,7 +13249,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13067,7 +13266,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2768
+            "y": 59
           },
           "id": 192,
           "options": {
@@ -13148,7 +13347,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13164,7 +13364,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2768
+            "y": 59
           },
           "id": 193,
           "options": {
@@ -13245,7 +13445,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13261,7 +13462,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2775
+            "y": 66
           },
           "id": 194,
           "options": {
@@ -13355,7 +13556,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13371,7 +13573,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2775
+            "y": 66
           },
           "id": 195,
           "options": {
@@ -13453,7 +13655,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13469,7 +13672,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2783
+            "y": 74
           },
           "id": 203,
           "options": {
@@ -13553,7 +13756,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13569,7 +13773,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2783
+            "y": 74
           },
           "id": 205,
           "options": {
@@ -13668,7 +13872,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13684,7 +13889,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2791
+            "y": 82
           },
           "id": 207,
           "options": {
@@ -13794,7 +13999,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13826,7 +14032,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2791
+            "y": 82
           },
           "id": 263,
           "options": {
@@ -13923,7 +14129,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -13963,6 +14170,30 @@
                     }
                   }
                 ]
+              },
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": {
+                    "mode": "exclude",
+                    "names": [
+                      "read : opthubs3-storage0:qa-iro/06-09-24_06-15-29/code-cache/V3/ (S3)"
+                    ],
+                    "prefix": "All except:",
+                    "readOnly": true
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": true
+                    }
+                  }
+                ]
               }
             ]
           },
@@ -13970,7 +14201,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2799
+            "y": 90
           },
           "id": 269,
           "options": {
@@ -14054,7 +14285,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14101,7 +14333,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2799
+            "y": 90
           },
           "id": 320,
           "options": {
@@ -14173,7 +14405,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2807
+            "y": 98
           },
           "id": 323,
           "options": {
@@ -14219,7 +14451,7 @@
                 "uid": "lU0wH9jnz"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(storage_blob_operations_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"cache\", action=\"read\"}[$__interval]))\n",
+              "expr": "sum by (le) (increase(storage_blob_operations_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"cache\", action=\"read\"}[$__rate_interval]))\n",
               "format": "heatmap",
               "hide": false,
               "interval": "",
@@ -14281,7 +14513,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14328,7 +14561,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2807
+            "y": 98
           },
           "id": 321,
           "options": {
@@ -14387,7 +14620,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2815
+            "y": 106
           },
           "id": 324,
           "options": {
@@ -14433,7 +14666,7 @@
                 "uid": "lU0wH9jnz"
               },
               "editorMode": "code",
-              "expr": "sum by (le) (increase(storage_blob_operations_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"cache\", action=\"write\"}[$__interval]))\n",
+              "expr": "sum by (le) (increase(storage_blob_operations_seconds_bucket{cluster=\"$cluster\", kubernetes_namespace=\"$ns\",app=\"cache\", action=\"write\"}[$__rate_interval]))\n",
               "format": "heatmap",
               "hide": false,
               "interval": "",
@@ -14495,7 +14728,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14542,7 +14776,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2815
+            "y": 106
           },
           "id": 322,
           "options": {
@@ -14639,7 +14873,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14736,7 +14971,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14832,7 +15068,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14848,7 +15085,7 @@
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 90
+            "y": 45
           },
           "id": 171,
           "options": {
@@ -14928,7 +15165,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -14944,7 +15182,7 @@
             "h": 6,
             "w": 12,
             "x": 12,
-            "y": 90
+            "y": 45
           },
           "id": 172,
           "options": {
@@ -15038,7 +15276,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15079,7 +15318,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 96
+            "y": 51
           },
           "id": 121,
           "options": {
@@ -15186,7 +15425,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15202,7 +15442,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 96
+            "y": 51
           },
           "id": 4,
           "options": {
@@ -15298,7 +15538,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15314,7 +15555,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 103
+            "y": 58
           },
           "id": 256,
           "options": {
@@ -15399,7 +15640,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15415,7 +15657,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 103
+            "y": 58
           },
           "id": 261,
           "options": {
@@ -15497,7 +15739,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15513,7 +15756,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 110
+            "y": 65
           },
           "id": 122,
           "options": {
@@ -15606,7 +15849,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15622,7 +15866,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 110
+            "y": 65
           },
           "id": 8,
           "options": {
@@ -15718,7 +15962,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15734,7 +15979,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 117
+            "y": 72
           },
           "id": 131,
           "options": {
@@ -15829,7 +16074,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15845,7 +16091,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 117
+            "y": 72
           },
           "id": 123,
           "options": {
@@ -15922,7 +16168,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -15938,7 +16185,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 124
+            "y": 79
           },
           "id": 156,
           "options": {
@@ -16022,7 +16269,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16038,7 +16286,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 124
+            "y": 79
           },
           "id": 158,
           "options": {
@@ -16122,7 +16370,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16138,7 +16387,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 131
+            "y": 86
           },
           "id": 157,
           "options": {
@@ -16222,7 +16471,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16238,7 +16488,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 131
+            "y": 86
           },
           "id": 159,
           "options": {
@@ -16320,7 +16570,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16336,7 +16587,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 138
+            "y": 93
           },
           "id": 229,
           "options": {
@@ -16417,7 +16668,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16433,7 +16685,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 138
+            "y": 93
           },
           "id": 187,
           "options": {
@@ -16514,7 +16766,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16530,7 +16783,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 145
+            "y": 100
           },
           "id": 216,
           "options": {
@@ -16612,7 +16865,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16628,7 +16882,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 145
+            "y": 100
           },
           "id": 217,
           "options": {
@@ -16709,7 +16963,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16725,7 +16980,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 152
+            "y": 107
           },
           "id": 218,
           "options": {
@@ -16819,7 +17074,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16835,7 +17091,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 152
+            "y": 107
           },
           "id": 219,
           "options": {
@@ -16931,7 +17187,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -16947,7 +17204,7 @@
             "h": 7,
             "w": 12,
             "x": 0,
-            "y": 2749
+            "y": 40
           },
           "id": 199,
           "options": {
@@ -17042,7 +17299,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17058,7 +17316,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 2749
+            "y": 40
           },
           "id": 201,
           "options": {
@@ -17154,7 +17412,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17170,7 +17429,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 2756
+            "y": 47
           },
           "id": 257,
           "options": {
@@ -17254,7 +17513,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17270,7 +17530,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 2756
+            "y": 47
           },
           "id": 209,
           "options": {
@@ -17366,7 +17626,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17382,7 +17643,7 @@
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 2764
+            "y": 55
           },
           "id": 271,
           "options": {
@@ -17479,7 +17740,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17495,7 +17757,7 @@
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 2764
+            "y": 55
           },
           "id": 272,
           "options": {
@@ -17592,7 +17854,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -17608,7 +17871,7 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 2764
+            "y": 55
           },
           "id": 273,
           "options": {
@@ -17656,8 +17919,8 @@
     "list": [
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "opthub",
+          "value": "dd032af7-4770-4166-8b15-e60d1f9da2fa"
         },
         "includeAll": false,
         "label": "DataSource",
@@ -17677,13 +17940,14 @@
           "type": "prometheus",
           "uid": "$DataSource"
         },
-        "definition": "label_values(kube_pod_container_info{container=\"gateway\"},cluster)",
+        "definition": "label_values(gateway_version{app=\"gateway\"},cluster)",
         "includeAll": false,
         "label": "Cluster",
         "name": "cluster",
         "options": [],
         "query": {
-          "query": "label_values(kube_pod_container_info{container=\"gateway\"},cluster)",
+          "qryType": 1,
+          "query": "label_values(gateway_version{app=\"gateway\"},cluster)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -17700,13 +17964,14 @@
           "type": "prometheus",
           "uid": "$DataSource"
         },
-        "definition": "label_values(kube_pod_container_info{cluster=\"$cluster\",container=\"gateway\"},namespace)",
+        "definition": "label_values(gateway_version{cluster=\"$cluster\", app=\"gateway\"},kubernetes_namespace)",
         "includeAll": false,
         "label": "Namespace",
         "name": "ns",
         "options": [],
         "query": {
-          "query": "label_values(kube_pod_container_info{cluster=\"$cluster\",container=\"gateway\"},namespace)",
+          "qryType": 1,
+          "query": "label_values(gateway_version{cluster=\"$cluster\", app=\"gateway\"},kubernetes_namespace)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -17756,6 +18021,6 @@
   "timezone": "utc",
   "title": "Optimizer Hub dashboard",
   "uid": "iCh4I48nk",
-  "version": 331,
+  "version": 336,
   "weekStart": ""
 }
