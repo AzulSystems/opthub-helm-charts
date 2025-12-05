@@ -106,7 +106,7 @@ readyNowOrchestrator:
     maxConcurrentRecordings: 10
     maxPromotableGeneration: 3
     maxSynchronizedGeneration: 2
-    maxProfileSize: 0
+    maxProfileSize: 300M
   promotion:
     minProfileSize: 1M
     minProfileDuration: "PT2M"
