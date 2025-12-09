@@ -4,8 +4,8 @@ name: azul-opthub
 description: "Azul Intelligence Cloud: Optimizer Hub"
 home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
 icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
-version: "25.11.0-3"
-appVersion: "25.11.0-3"
+version: "25.11.0-4"
+appVersion: "25.11.0-4"
 
 dependencies:
   - name: prometheus
