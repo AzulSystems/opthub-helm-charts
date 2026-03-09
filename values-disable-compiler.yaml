@@ -4,6 +4,7 @@ compileBroker:
   replicas: 0
   autoscaler:
     enabled: false
+    max: 0
 
 simpleSizing:
   disabled: true

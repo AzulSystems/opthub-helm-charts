@@ -30,7 +30,7 @@ metadata:
     {{- .Values.gateway.applicationAnnotations | toYaml | nindent 4 }}
   {{- end }}
 spec:
-  replicas: {{ include "sizing.gateway.replicas" . }}
+  replicas: {{ .Values.gateway.replicas | default 1 }}
   selector:
     matchLabels:
       app: gateway
@@ -71,102 +71,36 @@ spec:
         command: {{- .Values.gateway.command | toYaml | nindent 8 }}
         {{- end }}
         env:
-          - name: DEFAULT_STORAGE_LOCATION_BUCKET
-            value: {{ include "storageLocationBucket" . }}
-          - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}
-{{- if eq "s3" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: s3
-    {{- if eq "static" .Values.storage.s3.credentialsType }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
+          - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
                 name: {{ include "blobStorage.s3.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+          - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
                 name: {{ include "blobStorage.s3.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
-            value: static
-    {{- end }}
-          - name: QUARKUS_S3_CLOUD_REGION
-            value: {{ .Values.storage.s3.region }}
-{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: gcp-blob
-{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: azure-blob
-          - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
-            value: {{ .Values.storage.azureBlob.endpoint }}
-          - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
-            value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
           - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-  {{- end  }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
           - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-  {{- end  }}
-{{- end  }}
+{{- end }}
         args:
         - "-XX:+ExitOnOutOfMemoryError"
         - "-XX:MaxRAMPercentage=60"
         - "-XX:-OmitStackTraceInFastThrow"
-        - "-Dvm.session-statistics.log.client-continuously-blocked-threshold={{ .Values.operator.timeToClearOptimizationBacklog}}"
-{{- if .Values.storage.s3.storageEndpoint }}
-        - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
-{{- end  }}
-{{- if .Values.compilations.concurrencyBoost }}
-        - "-Dvm.default-concurency-boost={{ .Values.compilations.concurrencyBoost }}"
-{{- end  }}
-        - "-Dcompilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}"
-        - "-Dcompilation.limit.vm-min-version={{ .Values.compilations.minVmVersionForCNCCompilation }}"
-        - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
-        - "-Dvm.sessions.persist-to-inventory={{ .Values.inventory.enabled }}"
-        - "-Dreadynoworchestrator.debug-info-history-length={{ .Values.readyNowOrchestrator.debugInfoHistoryLength }}"
-        - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
-        - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
-        - "-Dreadynoworchestrator.cache.enabled={{ .Values.readyNowOrchestrator.cache.enabled }}"
-        - "-Dreadynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes }}"
-        - "-Dreadynoworchestrator.producers.continue-recording-on-promotion={{ .Values.readyNowOrchestrator.producers.continueRecordingOnPromotion }}"
-        - "-Dreadynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}"
-        - "-Dreadynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
-        - "-Dreadynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
-        - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize }}"
-        - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
-        - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
-        - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
-        - "-Dinternal.grpc.server.port={{ .Values.gateway.ports.internalGrpcPort }}"
-  {{- if .Values.gateway.resources }}
-        - "-Dquarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}"
-{{- end}}
-        - "-Dquarkus.grpc.server.port={{ .Values.gateway.ports.serviceGrpcPort }}"
-{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
-        - "-Dquarkus.grpc.server.ssl.certificate=/opt/ssl/cert.pem"
-        - "-Dquarkus.grpc.server.ssl.key=/opt/ssl/key.pem"
-{{- if .Values.ssl.mtls.enabled }}
-        - "-Dquarkus.grpc.server.ssl.client-auth=required"
-        - "-Dquarkus.grpc.server.ssl.trust-store=/opt/ssl/client-truststore.p12"
-        - "-Dquarkus.grpc.server.ssl.trust-store-password={{ .Values.ssl.mtls.password }}"
-{{- end }}
-{{- end }}
-{{- if and ((.Values.logStore).enabled) (ne ((.Values.logStore).deploymentMode) "dedicatedService") }}
-        - "-Dlogstore.enabled=true"
-{{- end }}
-{{- if ((.Values.compStream).enabled) }}
-        - "-Dcompstream.enabled=true"
-{{- end }}
 {{- if .Values.gateway.extraArguments }}
         {{- .Values.gateway.extraArguments | toYaml | nindent 8 }}
 {{- end }}
@@ -210,23 +144,22 @@ spec:
           failureThreshold: 18
         {{- end }}
         volumeMounts:
+          - name: config
+            mountPath: "/etc/opthub"
+            readOnly: true
           - name: tmp-volume
             mountPath: /tmp
-{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
-          - mountPath: "/opt/ssl"
-            name: ssl-cert
-            readOnly: true
-{{- end }}
       volumes:
+        - name: config
+          configMap:
+            name: quarkus-config
+            items:
+              - key: "opthub.properties"
+                path: "opthub.properties"
         - name: tmp-volume
           emptyDir:
 {{- if (((.Values.gateway).resources).limits) }}
             sizeLimit: {{ get .Values.gateway.resources.limits "ephemeral-storage" }}
-{{- end }}
-{{- if and .Values.ssl.enabled (not .Values.gwProxy.enabled) }}
-        - name: ssl-cert
-          secret:
-            secretName: {{ include "ssl.secretName" . }}
 {{- end }}
       serviceAccountName: {{ include "gateway.serviceAccount" . }}
 {{- if eq true .Values.gateway.azureVirtualNodes }}
@@ -284,37 +217,4 @@ spec:
   selector:
     app: gateway
   type: {{ .Values.gateway.service.type }}
-{{- end }}
-
-{{- if and .Values.autoscaler .Values.gateway.autoscaler.enabled}}
-{{- if eq "hpa" .Values.gateway.autoscaler.mode}}
----
-# Dependence on metric-server
-{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
-apiVersion: autoscaling/v2
-{{- else }}
-apiVersion: autoscaling/v2beta2
-{{- end }}
-kind: HorizontalPodAutoscaler
-metadata:
-  name: gateway
-  namespace: {{ .Release.Namespace }}
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: gateway
-  minReplicas: {{ include "sizing.gateway.minReplicas" . }}
-  maxReplicas: {{ include "sizing.gateway.maxReplicas" . }}
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-{{- end }}
 {{- end }}

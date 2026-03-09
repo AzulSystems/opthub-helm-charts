@@ -1,0 +1,147 @@
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quarkus-config
+data:
+  opthub.properties: |
+{{- if .Values.metricsPath }}
+    metrics.path={{ .Values.metricsPath }}
+{{- end }}
+    readynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}
+    readynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}
+    readynoworchestrator.promotion.max-synchronized-generation={{ .Values.readyNowOrchestrator.producers.maxSynchronizedGeneration }}
+    readynoworchestrator.promotion.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}
+    readynoworchestrator.promotion.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}
+    readynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize }}
+    readynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}
+    readynoworchestrator.promotion.min-profile-size-per-generation={{ .Values.readyNowOrchestrator.promotion.minProfileSizePerGeneration }}
+    readynoworchestrator.promotion.min-profile-duration-per-generation={{ .Values.readyNowOrchestrator.promotion.minProfileDurationPerGeneration }}
+    opthub.synchronization.enabled={{ .Values.synchronization.enabled }}
+    opthub.synchronization.peers={{ .Values.synchronization.peers }}
+    opthub.synchronization.period={{ .Values.synchronization.period }}
+    opthub.synchronization.delay={{ .Values.synchronization.initialDelay }}
+    default.storage-location.bucket={{ include "storageLocationBucket" . }}
+    default.storage-location.common-prefix={{ include "storageLocationPathPrefixWithNamespace" . }}
+    blob-storage.storage-service={{ .Values.storage.blobStorageService }}
+{{- if eq "s3" .Values.storage.blobStorageService }}
+  {{- if .Values.storage.s3.storageEndpoint }}
+    quarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}
+  {{- end }}
+    quarkus.s3.aws.region={{ .Values.storage.s3.region }}
+{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
+    blob-storage.azure-blob.endpoint={{ .Values.storage.azureBlob.endpoint }}
+    blob-storage.azure-blob.authMethod={{ .Values.storage.azureBlob.authMethod }}
+{{- end }}
+{{- if ((.Values.compStream).enabled) }}
+    compstream.enabled=true
+{{- end }}
+    hazelcast.kubernetes.enabled=true    
+    hazelcast.kubernetes.namespace={{ .Release.Namespace }}
+    hazelcast.kubernetes.service-name=cache    
+    hazelcast.graceful.shutdown.max.wait={{ max 0 (sub .Values.cache.terminationGracePeriodSeconds 15) }}
+    readynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}
+    readynoworchestrator.cleaner.target-size={{ .Values.readyNowOrchestrator.cleaner.targetSize }}
+    readynoworchestrator.cleaner.warning-size={{ .Values.readyNowOrchestrator.cleaner.warningSize }}
+    readynoworchestrator.cleaner.external-persistent-storage-soft-limit={{ .Values.readyNowOrchestrator.cleaner.externalPersistentStorageSoftLimit }}
+    readynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}
+    readynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}
+    inventory.eviction.enabled={{ .Values.inventory.enabled }}
+    inventory.eviction.interval={{ .Values.inventory.cleaner.interval }}
+    inventory.eviction.keep-unused-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}
+    codecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}
+    codecache.eviction.interval={{ .Values.codeCache.cleaner.interval }}
+    codecache.eviction.target-size={{ .Values.codeCache.cleaner.targetSize }}
+    cache-pod.quarkus.grpc.server.port={{ .Values.cache.ports.internalGrpcPort }}
+    maploaders.offload-enabled={{ .Values.codeCache.storage.offloadReadOperations | default false }}
+{{- if not .Values.codeCache.storage.writeBehindStorageMethod }}
+    maploaders.bucketsByCompilationHashDBCache.write-delay-seconds=0    
+    maploaders.cacheItemDBCacheV2.write-delay-seconds=0
+{{- end }}
+{{- if ((.Values.logStore).enabled) }}
+  {{- if ((.Values.logStore).cleanup).enabled }}
+    logstore.cleanup.enabled={{ .Values.logStore.cleanup.enabled }}
+  {{- end }}
+  {{- if ((.Values.logStore).cleanup).interval }}
+    logstore.cleanup.interval={{ .Values.logStore.cleanup.interval }}
+  {{- end }}
+  {{- if ((.Values.logStore).cleanup).firstRunDelay }}
+    logstore.cleanup.first-run-delay={{ .Values.logStore.cleanup.firstRunDelay }}
+  {{- end }}
+  {{- if ((.Values.logStore).cleanup).maxAge }}
+    logstore.cleanup.max-age={{ .Values.logStore.cleanup.maxAge }}
+  {{- end }}
+  {{- if ((.Values.logStore).cleanup).maxPageSize }}
+    logstore.cleanup.max-page-size={{ .Values.logStore.cleanup.maxPageSize }}
+  {{- end }}
+{{- end }}
+    graceful.shutdown.timeout={{ max 0 (sub .Values.compileBroker.terminationGracePeriodSeconds 5) }}
+    compiler.parallelism={{ .Values.compilations.parallelism.limitPerCompileBroker }}
+    compiler.lookup-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
+    vm.session-statistics.log.client-continuously-blocked-threshold={{ .Values.operator.timeToClearOptimizationBacklog}}
+    compilation.limit.per.vm={{ .Values.compilations.parallelism.limitPerVm }}
+    compilation.limit.vm-min-version={{ .Values.compilations.minVmVersionForCNCCompilation }}
+    vm.sessions.persist-to-inventory={{ .Values.inventory.enabled }}
+    readynoworchestrator.debug-info-history-length={{ .Values.readyNowOrchestrator.debugInfoHistoryLength }}
+    readynoworchestrator.cache.enabled={{ .Values.readyNowOrchestrator.cache.enabled }}
+    readynoworchestrator.cache.max-size-bytes={{ .Values.readyNowOrchestrator.cache.maxSizeBytes }}
+    readynoworchestrator.producers.continue-recording-on-promotion={{ .Values.readyNowOrchestrator.producers.continueRecordingOnPromotion }}
+    readynoworchestrator.producers.max-concurrent-recordings={{ .Values.readyNowOrchestrator.producers.maxConcurrentRecordings }}
+    readynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}
+    readynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}
+    gateway.internal.grpc.server.port={{ .Values.gateway.ports.internalGrpcPort }}
+    gateway-pod.quarkus.grpc.server.port={{ .Values.gateway.ports.serviceGrpcPort }}
+{{- if .Values.compilations.concurrencyBoost }}
+    vm.default-concurency-boost={{ .Values.compilations.concurrencyBoost }}
+{{- end }}
+{{- if .Values.gateway.resources }}
+    gateway-pod.quarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}
+{{- end }}
+{{- if and ((.Values.logStore).enabled) (ne ((.Values.logStore).deploymentMode) "dedicatedService") }}
+    logstore.enabled=true
+{{- end }}
+    logstore-pod.logstore.enabled=true
+{{- if (.Values.logStore).resources }}
+    logstore-pod.quarkus.grpc.server.instances={{ ceil .Values.logStore.resources.requests.cpu }}
+{{- end }}
+    broker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
+    scaling.broker.enabled={{ .Values.compileBroker.enabled }}
+    scaling.broker.min-replicas={{ .Values.compileBroker.autoscaler.min }}
+{{- if .Values.compileBroker.autoscaler.max }}
+    scaling.broker.max-replicas={{ .Values.compileBroker.autoscaler.max }}
+{{- end }}
+    broker.scale-down.stabilization-window={{ .Values.operator.scaleDownStabilizationWindow }}
+    time-to-clear-backlog={{ .Values.operator.timeToClearOptimizationBacklog}}
+    session-balancing.enabled={{ .Values.operator.sessionBalancing.enabled}}
+    session-balancing.min-gateway-cpu-usage={{ .Values.operator.sessionBalancing.minGatewayCpuUsage}}
+    operator.monitor-pod-cpu-usage={{ .Values.operator.monitorPodCpuUsage}}
+{{- if .Values.simpleSizing.disabled }}
+    simpleSizing.disabled={{ .Values.simpleSizing.disabled }}
+{{- end }}
+    simpleSizing.vCores={{ .Values.simpleSizing.vCores }}
+    simpleSizing.maxVCores={{ .Values.simpleSizing.maxVCores }}
+    simpleSizing.minVCores={{ .Values.simpleSizing.minVCores }}
+    operator.auto-scaling-enabled={{ .Values.autoscaler }}
+    scaling.cache.enabled={{ .Values.cache.autoscaler.enabled }}
+    scaling.cache.min-replicas={{ .Values.cache.autoscaler.min }}
+{{- if .Values.cache.autoscaler.max }}
+    scaling.cache.max-replicas={{ .Values.cache.autoscaler.max }}
+{{- end }}
+    scaling.cache.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerCache }}
+    scaling.gateway.enabled={{ .Values.gateway.autoscaler.enabled }}
+    scaling.gateway.min-replicas={{ .Values.gateway.autoscaler.min }}
+{{- if .Values.gateway.autoscaler.max }}
+    scaling.gateway.max-replicas={{ .Values.gateway.autoscaler.max }}
+{{- end }}
+    scaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
+    gateway.ports.internalGrpcPort={{ .Values.gateway.ports.internalGrpcPort }}
+    cache.ports.internalGrpcPort={{ .Values.cache.ports.internalGrpcPort }}
+    scaling.broker.cores-per-instance={{ .Values.compileBroker.resources.requests.cpu }}
+    scaling.cache.cores-per-instance={{ .Values.cache.resources.requests.cpu }}
+    scaling.gateway.cores-per-instance={{ .Values.gateway.resources.requests.cpu }}
+    scaling.mgmt-gateway.cores-per-instance={{ .Values.mgmtGateway.resources.requests.cpu }}
+    scaling.gw-proxy.enabled={{ .Values.gwProxy.enabled }}
+    scaling.gw-proxy.cores-per-instance={{ .Values.gwProxy.resources.requests.cpu }}
+    scaling.gw-proxy.replicas={{ .Values.gwProxy.replicas }}
+    scaling.operator.cores-per-instance={{ .Values.operator.resources.requests.cpu }}

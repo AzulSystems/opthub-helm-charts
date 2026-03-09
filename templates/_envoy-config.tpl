@@ -5,7 +5,7 @@ overload_manager:
     - name: "envoy.resource_monitors.fixed_heap"
       typed_config:
         "@type": type.googleapis.com/envoy.extensions.resource_monitors.fixed_heap.v3.FixedHeapConfig
-        max_heap_size_bytes: {{ include "_getGwProxyOverloadManagerMaxHeapSize" . }}
+        max_heap_size_bytes: {{ .Values.gwProxy.overloadManager.maxHeapSizeBytes }}
   actions:
     - name: "envoy.overload_actions.shrink_heap"
       triggers:

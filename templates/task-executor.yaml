@@ -1,6 +1,6 @@
 {{- include "validateRequiredValues" . }}
 
-{{- if (include "isTaskExecutorEnabled" .) }}
+{{- if ((.Values.taskExecutor).enabled) }}
 
 {{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.taskExecutor.existingServiceAccount)}}
 ---
@@ -73,68 +73,42 @@ spec:
           command: {{- .Values.taskExecutor.command | toYaml | nindent 8 }}
           {{- end }}
           env:
-            - name: DEFAULT_STORAGE_LOCATION_BUCKET
-              value: {{ include "storageLocationBucket" . }}
-            - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
-              value: {{ include "storageLocationPathPrefixWithNamespace" . }}
-  {{- if eq "s3" .Values.storage.blobStorageService }}
-            - name: BLOB_STORAGE_STORAGE_SERVICE
-              value: s3
-  {{- if eq "static" .Values.storage.s3.credentialsType }}
-            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "blobStorage.s3.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "blobStorage.s3.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-            - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
-              value: static
-  {{- end }}
-            - name: QUARKUS_S3_CLOUD_REGION
-              value: {{ .Values.storage.s3.region }}
-  {{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
-            - name: BLOB_STORAGE_STORAGE_SERVICE
-              value: gcp-blob
-  {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
-            - name: BLOB_STORAGE_STORAGE_SERVICE
-              value: azure-blob
-            - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
-              value: {{ .Values.storage.azureBlob.endpoint }}
-            - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
-              value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
             - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "azure.storage.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-  {{- end  }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
             - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
               valueFrom:
                 secretKeyRef:
                   name: {{ include "azure.storage.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-  {{- end  }}
-  {{- end  }}
+{{- end }}
           args:
             - "-XX:+ExitOnOutOfMemoryError"
             - "-XX:MaxRAMPercentage=60"
             - "-XX:-OmitStackTraceInFastThrow"
-{{- if .Values.storage.s3.storageEndpoint }}
-            - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
-{{- end  }}
-            - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
 {{- if .Values.taskExecutor.extraArguments }}
         {{- .Values.taskExecutor.extraArguments | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.taskExecutor.extraArgumentsMap }}
     {{- range $key, $val := .Values.taskExecutor.extraArgumentsMap }}
-        - -D{{ $key }}={{ $val }}
+            - -D{{ $key }}={{ $val }}
     {{- end }}
 {{- end }}
           ports:
@@ -170,9 +144,18 @@ spec:
             failureThreshold: 18
 {{- end }}
           volumeMounts:
+            - name: config
+              mountPath: "/etc/opthub"
+              readOnly: true
             - name: tmp-volume
               mountPath: /tmp
       volumes:
+        - name: config
+          configMap:
+            name: quarkus-config
+            items:
+              - key: "opthub.properties"
+                path: "opthub.properties"
         - name: tmp-volume
           emptyDir:
 {{- if (((.Values.taskExecutor).resources).limits) }}

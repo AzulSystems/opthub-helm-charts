@@ -14,7 +14,7 @@ metadata:
     {{- .Values.cache.applicationAnnotations | toYaml | nindent 4 }}
   {{- end }}
 spec:
-  replicas: {{ include "sizing.cache.replicas" . }}
+  replicas: {{ .Values.cache.replicas | default 1 }}
   podManagementPolicy: Parallel
   serviceName: cache
   selector:
@@ -92,96 +92,37 @@ spec:
 {{- end }}
 
         env:
-          - name: MAPLOADERS_STORAGE_TYPE
-            value: blobstore
-{{- if .Values.codeCache.storage.offloadReadOperations }}
-          - name: MAPLOADERS_OFFLOAD_ENABLED
-            value: "true"
-{{- else }}
-          - name: MAPLOADERS_OFFLOAD_ENABLED
-            value: "false"
-{{- end }}
-{{- if .Values.codeCache.storage.writeBehindStorageMethod }}
-{{- else }}
-          - name: MAPLOADERS_BUCKETSBYCOMPILATIONHASHDBCACHE_WRITE_DELAY_SECONDS
-            value: "0"
-          - name: MAPLOADERS_CACHEITEMDBCACHEV2_WRITE_DELAY_SECONDS
-            value: "0"
-{{- end }}
-          - name: DEFAULT_STORAGE_LOCATION_BUCKET
-            value: {{ include "storageLocationBucket" . }}
-          - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
-            value: {{ include "storageLocationPathPrefixWithNamespace" . }}
-{{- if eq "s3" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: s3
-    {{- if eq "static" .Values.storage.s3.credentialsType }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
+{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
+          - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
                 name: {{ include "blobStorage.s3.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
+          - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
                 name: {{ include "blobStorage.s3.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-          - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
-            value: static
-    {{- end }}
-          - name: QUARKUS_S3_CLOUD_REGION
-            value: {{ .Values.storage.s3.region }}
-{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: gcp-blob
-{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
-          - name: BLOB_STORAGE_STORAGE_SERVICE
-            value: azure-blob
-          - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
-            value: {{ .Values.storage.azureBlob.endpoint }}
-          - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
-            value: {{ .Values.storage.azureBlob.authMethod }}
-  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
           - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
             valueFrom:
               secretKeyRef:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-  {{- end }}
-  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+{{- end }}
+{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
           - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
             valueFrom:
               secretKeyRef:
                 name: {{ include "azure.storage.secretName" . }}
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-  {{- end  }}
-{{- end  }}
+{{- end }}
         args:
           - "-XX:InitialRAMPercentage=80"
           - "-XX:MaxRAMPercentage=80"
           - "-XX:+ExitOnOutOfMemoryError"
           - "-XX:-OmitStackTraceInFastThrow"
-          - "-Dhazelcast.kubernetes.enabled=true"
-          - "-Dhazelcast.kubernetes.namespace={{ .Release.Namespace }}"
-          - "-Dhazelcast.kubernetes.service-name=cache"
-{{- if .Values.storage.s3.storageEndpoint }}
-          - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
-{{- end  }}
-          - "-Dhazelcast.graceful.shutdown.max.wait={{ max 0 (sub .Values.cache.terminationGracePeriodSeconds 15) }}"
-          - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
-          - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
-          - "-Dreadynoworchestrator.cleaner.target-size={{ include "_getProfilesEvictionTargetSizeInB" . }}"
-          - "-Dreadynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}"
-          - "-Dreadynoworchestrator.cleaner.warning-size={{ include "_getProfilesWarningSizeInB" . }}"
-          - "-Dreadynoworchestrator.cleaner.keep-unrequested-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
-          - "-Dreadynoworchestrator.cleaner.keep-debug-only-generation-profiles-for={{ .Values.readyNowOrchestrator.cleaner.keepDebugOnlyGenerationProfilesFor }}"
-          - "-Dinventory.eviction.enabled={{ .Values.inventory.enabled }}"
-          - "-Dinventory.eviction.interval={{ .Values.inventory.cleaner.interval }}"
-          - "-Dinventory.eviction.keep-unused-profile-names-for={{ .Values.readyNowOrchestrator.cleaner.keepUnrequestedProfileNamesFor }}"
-          - "-Dcodecache.eviction.enabled={{ .Values.codeCache.cleaner.enabled }}"
-          - "-Dcodecache.eviction.interval={{ .Values.codeCache.cleaner.interval }}"
-          - "-Dcodecache.eviction.target-size={{ .Values.codeCache.cleaner.targetSize }}"
-          - "-Dquarkus.grpc.server.port={{ .Values.cache.ports.internalGrpcPort }}"
 {{- if .Values.cache.extraArguments }}
           {{- .Values.cache.extraArguments | toYaml | nindent 10 }}
 {{- end }}
@@ -194,9 +135,18 @@ spec:
         resources: {{- .Values.cache.resources | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
+          - name: config
+            mountPath: "/etc/opthub"
+            readOnly: true
           - name: tmp-volume
             mountPath: /tmp
       volumes:
+        - name: config
+          configMap:
+            name: quarkus-config
+            items:
+              - key: "opthub.properties"
+                path: "opthub.properties"
         - name: tmp-volume
           emptyDir:
 {{- if (((.Values.cache).resources).limits) }}
@@ -244,43 +194,6 @@ spec:
       name: cache-server
   selector:
     app: cache
-
-{{- if and .Values.autoscaler .Values.cache.autoscaler.enabled}}
-{{- if eq "hpa" .Values.cache.autoscaler.mode}}
----
-# Dependence on metric-server
-{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
-apiVersion: autoscaling/v2
-{{- else }}
-apiVersion: autoscaling/v2beta2
-{{- end }}
-kind: HorizontalPodAutoscaler
-metadata:
-  name: cache
-  namespace: {{ .Release.Namespace }}
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: StatefulSet
-    name: cache
-  minReplicas: {{ include "sizing.cache.minReplicas" . }}
-  maxReplicas: {{ include "sizing.cache.maxReplicas" . }}
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-  behavior:
-    scaleDown:
-      policies:
-        - type: Percent
-          value: 10
-          periodSeconds: 120
-
-{{- end }}
-{{- end }}
 
 {{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.cache.existingServiceAccount) }}
 ---
