@@ -1,11 +1,5 @@
 ---
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: quarkus-config
-data:
-  opthub.properties: |
+{{- define "opthub.properties.content" -}}
 {{- if .Values.metricsPath }}
     metrics.path={{ .Values.metricsPath }}
 {{- end }}
@@ -145,3 +139,24 @@ data:
     scaling.gw-proxy.cores-per-instance={{ .Values.gwProxy.resources.requests.cpu }}
     scaling.gw-proxy.replicas={{ .Values.gwProxy.replicas }}
     scaling.operator.cores-per-instance={{ .Values.operator.resources.requests.cpu }}
+{{- if .Values.compileArtifact.cleaner.enabled }}
+    cache-pod.compiler.artifact.cleanup.enabled={{ .Values.compileArtifact.cleaner.enabled }}
+    {{- if .Values.compileArtifact.cleaner.keepCompilerCrashArtifactsFor }}
+    cache-pod.compiler.artifact.cleanup.max-age={{ .Values.compileArtifact.cleaner.keepCompilerCrashArtifactsFor }}
+    {{- end }}
+    {{- if .Values.compileArtifact.cleaner.cleanupInterval }}
+    cache-pod.compiler.artifact.cleanup.interval={{ .Values.compileArtifact.cleaner.cleanupInterval }}
+    {{- end }}
+    {{- if .Values.compileArtifact.cleaner.firstRunDelay }}
+    cache-pod.compiler.artifact.cleanup.first-run-delay={{ .Values.compileArtifact.cleaner.firstRunDelay }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quarkus-config
+data:
+  opthub.properties: |
+{{ include "opthub.properties.content" .}}

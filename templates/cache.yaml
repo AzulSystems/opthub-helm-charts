@@ -32,6 +32,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/q/metrics"
         prometheus.io/port: "8080"
+        checksum/opthub.properties: {{ (include "opthub.properties.content" .) | sha256sum }}
         {{- if .Values.cache.podTemplateAnnotations }}
         {{- .Values.cache.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}

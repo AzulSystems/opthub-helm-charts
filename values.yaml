@@ -92,6 +92,12 @@ compilations:
     limitPerCompileBroker: 30
     lookupParallelism: 120 # calculated as limitPerCompileBroker * 4
 
+compileArtifact:
+  cleaner:
+    enabled: true
+    keepCompilerCrashArtifactsFor: "P30D"
+    cleanupInterval: "P1D"
+
 readyNowOrchestrator:
   debugInfoHistoryLength: 100
   completedAfter: "PT24H"

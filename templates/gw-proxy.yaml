@@ -47,7 +47,7 @@ spec:
         {{- .Values.gwProxy.podTemplateLabels | toYaml | nindent 8 }}
         {{- end }}
       annotations:
-        checksum/envoy: {{ printf "%s%s%s" (include "envoy.config" .) (include "envoy.cds" .) (include "envoy.lds" .) | sha256sum }}
+        checksum/envoy: {{ printf "%s%s%s%s" (include "envoy.config" .) (include "envoy.cds" .) (include "envoy.lds" .) (toJson .Values.ssl) | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
         prometheus.io/path: "/stats/prometheus"
