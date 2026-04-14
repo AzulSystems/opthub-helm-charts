@@ -47,7 +47,7 @@ spec:
         {{- .Values.gwProxy.podTemplateLabels | toYaml | nindent 8 }}
         {{- end }}
       annotations:
-        checksum/envoy: {{ printf "%s%s%s%s" (include "envoy.config" .) (include "envoy.cds" .) (include "envoy.lds" .) (toJson .Values.ssl) | sha256sum }}
+        checksum/envoy: {{ printf "%s%s%s" (include "envoy.config" .) (include "envoy.cds" .) (include "envoy.lds" .) | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
         prometheus.io/path: "/stats/prometheus"
@@ -191,5 +191,37 @@ spec:
       targetPort: 50051
   selector:
     app: log-store
+{{- end }}
+{{- if and .Values.autoscaler .Values.gwProxy.autoscaler.enabled}}
+{{- if eq "hpa" .Values.gwProxy.autoscaler.mode}}
+---
+# Dependence on metric-server
+{{- if .Capabilities.APIVersions.Has "autoscaling/v2" }}
+apiVersion: autoscaling/v2
+{{- else }}
+apiVersion: autoscaling/v2beta2
+{{- end }}
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gw-proxy
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gw-proxy
+  minReplicas: {{ .Values.gwProxy.autoscaler.min }}
+  maxReplicas: {{ .Values.gwProxy.autoscaler.max }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+{{- end }}
 {{- end }}
 {{- end }}

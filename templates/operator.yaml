@@ -1,4 +1,4 @@
-{{- if and .Values.operator .Values.operator.enabled}}
+{{- if and .Values.autoscaler .Values.compileBroker.autoscaler.enabled}}
 
 {{- if and (eq "" .Values.deployment.serviceAccount.existingServiceAccount) (eq "" .Values.operator.existingServiceAccount)}}
 ---
@@ -16,8 +16,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}
-
 ---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -92,7 +92,6 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
-        checksum/opthub.properties: {{ (include "opthub.properties.content" .) | sha256sum }}
         {{- if .Values.operator.podTemplateAnnotations }}
         {{- .Values.operator.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}
@@ -120,6 +119,33 @@ spec:
           args:
             - -XX:+ExitOnOutOfMemoryError
             - -XX:MaxRAMPercentage=60
+            - -Dquarkus.hazelcast-client.cluster-members=cache:5701
+            - -Dbroker.compilation-parallelism={{ .Values.compilations.parallelism.lookupParallelism }}
+            - -Dbroker.enabled={{ .Values.compileBroker.enabled }}
+            - -Dbroker.min-replicas={{ include "sizing.compileBroker.minReplicas" . }}
+            - -Dbroker.max-replicas={{ include "sizing.compileBroker.maxReplicas" . }}
+            - -Dbroker.cores-per-instance={{ include "_sizing.broker.vCores" . }}
+            - -Dbroker.scale-down.stabilization-window={{ .Values.operator.scaleDownStabilizationWindow }}
+            - -Dtime-to-clear-backlog={{ .Values.operator.timeToClearOptimizationBacklog}}
+            - -Dsession-balancing.enabled={{ .Values.operator.sessionBalancing.enabled}}
+            - -Dsession-balancing.min-gateway-cpu-usage={{ .Values.operator.sessionBalancing.minGatewayCpuUsage}}
+            - -Doperator.monitor-pod-cpu-usage={{ .Values.operator.monitorPodCpuUsage}}
+{{- if eq "operator" .Values.cache.autoscaler.mode}}
+            - -Dscaling.cache.enabled={{ .Values.cache.autoscaler.enabled }}
+            - -Dscaling.cache.min-replicas={{ include "sizing.cache.minReplicas" . }}
+            - -Dscaling.cache.max-replicas={{ include "sizing.cache.maxReplicas" . }}
+            - -Dscaling.cache.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerCache }}
+            - -Dscaling.cache.cores-per-instance={{ include "_sizing.cache.vCores" . }}
+{{- end }}
+{{- if eq "operator" .Values.gateway.autoscaler.mode}}
+            - -Dscaling.gateway.enabled={{ .Values.gateway.autoscaler.enabled }}
+            - -Dscaling.gateway.min-replicas={{ include "sizing.gateway.minReplicas" . }}
+            - -Dscaling.gateway.max-replicas={{ include "sizing.gateway.maxReplicas" . }}
+            - -Dscaling.gateway.broker-instances-for-one={{ .Values.simpleSizing.relationships.brokersPerGateway }}
+            - -Dscaling.gateway.cores-per-instance={{ include "_sizing.gateway.vCores" . }}
+{{- end }}
+            - -Dgateway.ports.internalGrpcPort={{ .Values.gateway.ports.internalGrpcPort }}
+            - -Dcache.ports.internalGrpcPort={{ .Values.cache.ports.internalGrpcPort }}
 {{- if .Values.operator.extraArguments }}
   {{- .Values.operator.extraArguments | toYaml | nindent 12 }}
 {{- end }}
@@ -161,18 +187,9 @@ spec:
             failureThreshold: 10
           {{- end }}
           volumeMounts:
-            - name: config
-              mountPath: "/etc/opthub"
-              readOnly: true
             - name: tmp-volume
               mountPath: /tmp
       volumes:
-        - name: config
-          configMap:
-            name: quarkus-config
-            items:
-              - key: "opthub.properties"
-                path: "opthub.properties"
         - name: tmp-volume
           emptyDir:
 {{- if (((.Values.operator).resources).limits) }}
@@ -199,4 +216,4 @@ spec:
 {{- if .Values.operator.affinity }}
       affinity: {{- .Values.operator.affinity | toYaml | nindent 8 }}
 {{- end }}
-{{- end }}
+{{- end}}

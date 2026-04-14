@@ -46,7 +46,6 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
         prometheus.io/path: "/q/metrics"
-        checksum/opthub.properties: {{ (include "opthub.properties.content" .) | sha256sum }}
         {{- if .Values.mgmtGateway.podTemplateAnnotations }}
         {{- .Values.mgmtGateway.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}
@@ -72,35 +71,77 @@ spec:
           command: {{- .Values.mgmtGateway.command | toYaml | nindent 10 }}
           {{- end }}
           env:
-{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
-            - name: AWS_ACCESS_KEY_ID
+            - name: DEFAULT_STORAGE_LOCATION_BUCKET
+              value: {{ include "storageLocationBucket" . }}
+            - name: DEFAULT_STORAGE_LOCATION_COMMON_PREFIX
+              value: {{ include "storageLocationPathPrefixWithNamespace" . }}
+{{- if eq "s3" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: s3
+    {{- if eq "static" .Values.storage.s3.credentialsType }}
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "blobStorage.s3.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-            - name: AWS_SECRET_ACCESS_KEY
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_STATIC_PROVIDER_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "blobStorage.s3.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
+            - name: QUARKUS_S3_CLOUD_CREDENTIALS_TYPE
+              value: static
+    {{- end }}
+            - name: QUARKUS_S3_CLOUD_REGION
+              value: {{ .Values.storage.s3.region }}
+{{- else if eq "gcp-blob" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: gcp-blob
+{{- else if eq "azure-blob" .Values.storage.blobStorageService }}
+            - name: BLOB_STORAGE_STORAGE_SERVICE
+              value: azure-blob
+            - name: BLOB_STORAGE_AZURE_BLOB_ENDPOINT
+              value: {{ .Values.storage.azureBlob.endpoint }}
+            - name: BLOB_STORAGE_AZURE_BLOB_AUTHMETHOD
+              value: {{ .Values.storage.azureBlob.authMethod }}
+  {{- if and (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
             - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "azure.storage.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
+  {{- end  }}
+  {{- if and (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
             - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
               valueFrom:
                 secretKeyRef:
                   name: {{ include "azure.storage.secretName" . }}
                   key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-{{- end }}
+  {{- end  }}
+{{- end  }}
           args:
             - "-XX:+ExitOnOutOfMemoryError"
             - "-XX:MaxRAMPercentage=60"
+            - "-Dquarkus.hazelcast-client.cluster-members=cache:5701"
+{{- if .Values.storage.s3.storageEndpoint }}
+            - "-Dquarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}"
+{{- end  }}
+            - "-Dreadynoworchestrator.completed-after={{ .Values.readyNowOrchestrator.completedAfter }}"
+            - "-Dreadynoworchestrator.completion-grace-period={{ .Values.readyNowOrchestrator.completionGracePeriod }}"
+            - "-Dreadynoworchestrator.promotion.max-synchronized-generation={{ .Values.readyNowOrchestrator.producers.maxSynchronizedGeneration }}"
+            - "-Dreadynoworchestrator.promotion.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}"
+            - "-Dreadynoworchestrator.promotion.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-size={{ .Values.readyNowOrchestrator.promotion.minProfileSize }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-duration={{ .Values.readyNowOrchestrator.promotion.minProfileDuration }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-size-per-generation={{ include "getPromotionMinProfileSizePerGeneration" . }}"
+            - "-Dreadynoworchestrator.promotion.min-profile-duration-per-generation={{ include "getPromotionMinProfileDurationPerGeneration" . }}"
+            - "-Dopthub.synchronization.enabled={{ .Values.synchronization.enabled }}"
+            - "-Dopthub.synchronization.peers={{ .Values.synchronization.peers }}"
+            - "-Dopthub.synchronization.period={{ .Values.synchronization.period }}"
+            - "-Dopthub.synchronization.delay={{ .Values.synchronization.initialDelay }}"
+{{- if ((.Values.compStream).enabled) }}
+            - "-Dcompstream.enabled=true"
+{{- end }}
 {{- if .Values.mgmtGateway.extraArguments }}
     {{- .Values.mgmtGateway.extraArguments | toYaml | nindent 12 }}
 {{- end }}
@@ -142,18 +183,9 @@ spec:
             failureThreshold: 18
 {{- end }}
           volumeMounts:
-            - name: config
-              mountPath: "/etc/opthub"
-              readOnly: true
             - name: tmp-volume
               mountPath: /tmp
       volumes:
-        - name: config
-          configMap:
-            name: quarkus-config
-            items:
-              - key: "opthub.properties"
-                path: "opthub.properties"
         - name: tmp-volume
           emptyDir:
 {{- if (((.Values.mgmtGateway).resources).limits) }}
