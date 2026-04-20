@@ -10,64 +10,29 @@ autoscaler: false
 
 gateway:
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
 
 gwProxy:
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
 
 mgmtGateway:
   enabled: false
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
 
 compileBroker:
-  autoscaler:
-    max: 1
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
 
 cache:
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
+
 operator:
   resources:
-    requests:
-      cpu: 1
-      memory:
-    limits:
-      cpu: 1
-      memory:
+
 
 storage:
   blobStorageService: s3
   s3:
     commonBucket: opthub
+    credentialsType: "static"
     storageEndpoint: http://minio.minio-dev.svc.cluster.local:9000
 
 secrets:
