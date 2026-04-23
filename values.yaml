@@ -10,20 +10,18 @@ registry:
 
 imagePullPolicy: "IfNotPresent"
 
-metricsPath:
-
 simpleSizing:
   # Total number of vCores that will be allocated to the CNC service.
   # The sizing formula in the templates will allocate individual
   # CNC infrastructure components to best utilize given resources.
   # The default number is the amount of vCores necessary to start
-  # minimum required replicas of each component, so that the service is operational.
-  vCores: 38
+  # one replica of each CNC component, so that the service is operational.
+  vCores: 32
   # minVCores and maxVCores has the same formula as vCores, but applied
   # when autoscaling is enabled.
-  minVCores: 38
+  minVCores: 32
   # Default max is to allocate 10 compile brokers.
-  maxVCores: 115
+  maxVCores: 106
 
 
   # Do not change these values unless you change the required CNC pod sizing.
@@ -45,12 +43,12 @@ secrets:
       # name of *key* for `accessKey` value in K8S Secret. It can be renamed to match names in existing Secret
       accessKeySecretKey: blob-storage-accesskey
       # default value for accesskey - used when new secret is created
-      accesskey: null # <yourAccessKey>
+      accesskey: <yourAccessKey>
 
       # name of *key* for `secretkey` value in K8S Secret. It can be renamed to match names in existing Secret
       secretAccessKeySecretKey: blob-storage-secretkey
       # default value for db.secretkey - used when new secret is created
-      secretkey: null # <yourSecretKey>
+      secretkey: <yourSecretKey>
     azure:
       # name of existing Secret object to use. New Secret is created if name is empty
       existingSecret: ""
@@ -81,6 +79,10 @@ ssl:
     cert: "cert.pem"
     key: "key.pem"
   existingSecret: ""
+  mtls:
+    enabled: false
+    truststore: "client-truststore.p12"
+    password: "pass"
 
 compilations:
   minVmVersionForCNCCompilation: ""
@@ -91,12 +93,6 @@ compilations:
     # Maximum amount of parallel compiler engine processes running at the same time per compile broker.
     limitPerCompileBroker: 30
     lookupParallelism: 120 # calculated as limitPerCompileBroker * 4
-
-compileArtifact:
-  cleaner:
-    enabled: true
-    keepCompilerCrashArtifactsFor: "P30D"
-    cleanupInterval: "P1D"
 
 readyNowOrchestrator:
   debugInfoHistoryLength: 100
@@ -161,6 +157,7 @@ storage:
     commonBucket: <your-bucket>
     region: "us-west-2"
     storageEndpoint: "" # override to set your s3 endpoint if using S3 compatible storage service
+    credentialsType: "default" # available options: default, static
 #################################################################################
 # The rest of the settings are only to show you the values used internally.     #
 # Changing the values below will not have any affect on your CNC cluster.       #
@@ -170,8 +167,9 @@ gateway:
   replicas: 1
   autoscaler:
     enabled: true
+    mode: operator
     min: 1
-    max:
+    max: 10
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -209,17 +207,23 @@ gateway:
 gwProxy:
   enabled: true
   replicas: 1
+  autoscaler:
+    enabled: false
+    mode: hpa
+    min: 1
+    max: 10
   resources:
     requests:
       cpu: "7"
-      memory: "1Gi" # Adjust gwProxy.overloadManager.maxHeapSizeBytes accordingly to the memory budget
+      memory: "1Gi"
       ephemeral-storage: "1Gi"
     limits:
       cpu: "7"
       memory: "1Gi"
       ephemeral-storage: "1Gi"
   overloadManager:
-    maxHeapSizeBytes: "524288000" # = "500Mi"
+    maxHeapSizePodRatio: "0.50" # "0.50" is 50% of gwProxy.resources.limits.memory
+    maxHeapSizeBytes: "0" # if not "0", then this value is used instead of maxHeapSizePodRatio
   circuitBreakers:
     maxRequests: "3072"
     maxConnections: "3072"
@@ -242,7 +246,7 @@ compileBroker:
   autoscaler:
     enabled: true
     min: 1
-    max:
+    max: 10
   terminationGracePeriodSeconds: 60
   resources:
     requests:
@@ -271,8 +275,9 @@ cache:
   replicas: 1
   autoscaler:
     enabled: true
+    mode: operator
     min: 2
-    max:
+    max: 2
   terminationGracePeriodSeconds: 300
   resources:
     requests:
@@ -300,7 +305,6 @@ cache:
     internalGrpcPort: 50071
 
 operator:
-  enabled: true
   scaleDownStabilizationWindow: 120S
   timeToClearOptimizationBacklog: 120s
   monitorPodCpuUsage: true
@@ -353,6 +357,8 @@ mgmtGateway:
   podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+
+test: false
 
 # Monitoring section
 grafana:
