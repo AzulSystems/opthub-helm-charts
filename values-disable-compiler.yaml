@@ -2,6 +2,8 @@
 compileBroker:
   enabled: false
   replicas: 0
+  autoscaler:
+    enabled: false
 
 simpleSizing:
   disabled: true
@@ -14,6 +16,3 @@ compilations:
 codeCache:
   cleaner:
     enabled: false
-
-operator:
-  enabled: false
