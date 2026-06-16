@@ -1,5 +1,10 @@
 ---
 ###################################################################################################
+# Minikube uses a reduced resource setup, which might cause clients to go to local fallback.      #
+# To disable local fallback, use -XX:-CNCLocalFallback.                                           #
+###################################################################################################
+
+###################################################################################################
 # The rest of the settings are for reference only. You should not override any of these settings. #
 ###################################################################################################
 
@@ -8,33 +13,41 @@ simpleSizing:
 
 autoscaler: false
 
+compilations:
+  parallelism:
+    limitPerCompileBroker: 15
+    lookupParallelism: 60
+
 gateway:
   resources:
     requests:
       cpu: 1
-      memory:
+      memory: "2Gi"
     limits:
       cpu: 1
-      memory:
+      memory: "2Gi"
+  extraArguments:
+    - "-Xmx1200m"
 
 gwProxy:
   resources:
     requests:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "500Mi"
     limits:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "500Mi"
 
 mgmtGateway:
-  enabled: false
   resources:
     requests:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "500Mi"
     limits:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "500Mi"
+  extraArguments:
+    - "-Xmx256m"
 
 compileBroker:
   autoscaler:
@@ -42,27 +55,33 @@ compileBroker:
   resources:
     requests:
       cpu: 1
-      memory:
+      memory: "2Gi"
     limits:
       cpu: 1
-      memory:
+      memory: "2Gi"
+  extraArguments:
+    - "-Xms512m"
+    - "-Xmx1g"
 
 cache:
   resources:
     requests:
       cpu: 1
-      memory:
+      memory: "2Gi"
     limits:
       cpu: 1
-      memory:
+      memory: "2Gi"
+  extraArguments:
+    - "-Xmx1500m"
+
 operator:
   resources:
     requests:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "1Gi"
     limits:
-      cpu: 1
-      memory:
+      cpu: 0.5
+      memory: "1Gi"
 
 storage:
   blobStorageService: s3

@@ -31,9 +31,9 @@
 {{- if ((.Values.compStream).enabled) }}
     compstream.enabled=true
 {{- end }}
-    hazelcast.kubernetes.enabled=true    
+    hazelcast.kubernetes.enabled=true
     hazelcast.kubernetes.namespace={{ .Release.Namespace }}
-    hazelcast.kubernetes.service-name=cache    
+    hazelcast.kubernetes.service-name=cache
     hazelcast.graceful.shutdown.max.wait={{ max 0 (sub .Values.cache.terminationGracePeriodSeconds 15) }}
     readynoworchestrator.cleaner.enabled={{ .Values.readyNowOrchestrator.cleaner.enabled }}
     readynoworchestrator.cleaner.target-size={{ .Values.readyNowOrchestrator.cleaner.targetSize }}
@@ -50,7 +50,7 @@
     cache-pod.quarkus.grpc.server.port={{ .Values.cache.ports.internalGrpcPort }}
     maploaders.offload-enabled={{ .Values.codeCache.storage.offloadReadOperations | default false }}
 {{- if not .Values.codeCache.storage.writeBehindStorageMethod }}
-    maploaders.bucketsByCompilationHashDBCache.write-delay-seconds=0    
+    maploaders.bucketsByCompilationHashDBCache.write-delay-seconds=0
     maploaders.cacheItemDBCacheV2.write-delay-seconds=0
 {{- end }}
 {{- if ((.Values.logStore).enabled) }}
@@ -155,8 +155,9 @@
 
 apiVersion: v1
 kind: ConfigMap
+immutable: true
 metadata:
-  name: quarkus-config
+  name: {{ include "quarkus-config.name" . }}
 data:
   opthub.properties: |
 {{ include "opthub.properties.content" .}}

@@ -118,3 +118,7 @@
     {{ "opthub-mgmt-gateway" }}
   {{- end -}}
 {{- end -}}
+
+{{- define "quarkus-config.name" -}}
+quarkus-config-{{ include "opthub.properties.content" . | sha256sum | trunc 8 }}
+{{- end -}}

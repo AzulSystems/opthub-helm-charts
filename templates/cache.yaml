@@ -144,7 +144,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: quarkus-config
+            name: {{ include "quarkus-config.name" . }}
             items:
               - key: "opthub.properties"
                 path: "opthub.properties"
