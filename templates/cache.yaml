@@ -43,6 +43,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+        runAsGroup: 10001
         fsGroup: 1001
       containers:
       - name: cache
@@ -120,6 +121,8 @@ spec:
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
 {{- end }}
         args:
+          {{- include "opthub.container.args" . | nindent 10 }}
+          - "-XX:+UseZGC"
           - "-XX:InitialRAMPercentage=80"
           - "-XX:MaxRAMPercentage=80"
           - "-XX:+ExitOnOutOfMemoryError"

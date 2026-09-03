@@ -122,3 +122,8 @@
 {{- define "quarkus-config.name" -}}
 quarkus-config-{{ include "opthub.properties.content" . | sha256sum | trunc 8 }}
 {{- end -}}
+
+{{- define "opthub.container.args" -}}
+- "-Dsun.net.inetaddr.negative.ttl=1"
+- "-Dsun.net.inetaddr.ttl=5"
+{{- end -}}

@@ -56,6 +56,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+        runAsGroup: 10001
         fsGroup: 1001
       {{- if .Values.taskExecutor.spec }}
       {{- .Values.taskExecutor.spec | toYaml | nindent 6 }}
@@ -101,11 +102,12 @@ spec:
                   key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
 {{- end }}
           args:
+            {{- include "opthub.container.args" . | nindent 12 }}
             - "-XX:+ExitOnOutOfMemoryError"
             - "-XX:MaxRAMPercentage=60"
             - "-XX:-OmitStackTraceInFastThrow"
 {{- if .Values.taskExecutor.extraArguments }}
-        {{- .Values.taskExecutor.extraArguments | toYaml | nindent 8 }}
+        {{- .Values.taskExecutor.extraArguments | toYaml | nindent 12 }}
 {{- end }}
 {{- if .Values.taskExecutor.extraArgumentsMap }}
     {{- range $key, $val := .Values.taskExecutor.extraArgumentsMap }}
@@ -116,7 +118,7 @@ spec:
             - containerPort: 8080
               name: http-endpoint
 {{- if .Values.taskExecutor.resources }}
-          resources: {{- .Values.taskExecutor.resources | toYaml | nindent 10 }}
+          resources: {{- .Values.taskExecutor.resources | toYaml | nindent 12 }}
 {{- end }}
 {{- if ne true .Values.taskExecutor.disableKubernetesProbes }}
           readinessProbe:
@@ -162,6 +164,7 @@ spec:
 {{- if (((.Values.taskExecutor).resources).limits) }}
             sizeLimit: {{ get .Values.taskExecutor.resources.limits "ephemeral-storage" }}
 {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.taskExecutor.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "taskExecutor.serviceAccount" . }}
 {{- if eq true .Values.taskExecutor.azureVirtualNodes }}
       nodeSelector:
