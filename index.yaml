@@ -2,8 +2,28 @@ apiVersion: v1
 entries:
   azul-opthub:
   - apiVersion: v2
+    appVersion: 26.08.0-4
+    created: "2026-09-03T12:26:02.834954113Z"
+    dependencies:
+    - condition: prometheus.enabled
+      name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 27.46.0
+    - condition: grafana.enabled
+      name: grafana
+      repository: https://grafana.github.io/helm-charts
+      version: 8.10.4
+    description: 'Azul Intelligence Cloud: Optimizer Hub'
+    digest: 5b674c7663af46813f753afabf47595d92d3d725bdee4e5e1af44597e4ccac40
+    home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
+    icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
+    name: azul-opthub
+    urls:
+    - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-26.08.0-4.tgz
+    version: 26.08.0-4
+  - apiVersion: v2
     appVersion: 26.08.0-3
-    created: "2026-09-03T09:32:08.780499647Z"
+    created: "2026-09-03T12:26:02.81632109Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -23,7 +43,7 @@ entries:
     version: 26.08.0-3
   - apiVersion: v2
     appVersion: 26.05.0
-    created: "2026-09-03T09:32:08.762685486Z"
+    created: "2026-09-03T12:26:02.797341168Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -43,7 +63,7 @@ entries:
     version: 26.05.0
   - apiVersion: v2
     appVersion: 26.05.0-2
-    created: "2026-09-03T09:32:08.743689935Z"
+    created: "2026-09-03T12:26:02.778122736Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -63,7 +83,7 @@ entries:
     version: 26.05.0-2
   - apiVersion: v2
     appVersion: 26.05.0-1
-    created: "2026-09-03T09:32:08.725022658Z"
+    created: "2026-09-03T12:26:02.760869794Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -83,7 +103,7 @@ entries:
     version: 26.05.0-1
   - apiVersion: v2
     appVersion: 26.02.1
-    created: "2026-09-03T09:32:08.708074071Z"
+    created: "2026-09-03T12:26:02.742981883Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -103,7 +123,7 @@ entries:
     version: 26.02.1
   - apiVersion: v2
     appVersion: 26.02.1-1
-    created: "2026-09-03T09:32:08.69046448Z"
+    created: "2026-09-03T12:26:02.723506285Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -123,7 +143,7 @@ entries:
     version: 26.02.1-1
   - apiVersion: v2
     appVersion: 26.02.0
-    created: "2026-09-03T09:32:08.671546701Z"
+    created: "2026-09-03T12:26:02.705866376Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -143,7 +163,7 @@ entries:
     version: 26.02.0
   - apiVersion: v2
     appVersion: 26.02.0-5
-    created: "2026-09-03T09:32:08.654080863Z"
+    created: "2026-09-03T12:26:02.684833289Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -163,7 +183,7 @@ entries:
     version: 26.02.0-5
   - apiVersion: v2
     appVersion: 26.02.0-4
-    created: "2026-09-03T09:32:08.635871949Z"
+    created: "2026-09-03T12:26:02.665236368Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -183,7 +203,7 @@ entries:
     version: 26.02.0-4
   - apiVersion: v2
     appVersion: 26.02.0-3
-    created: "2026-09-03T09:32:08.610724254Z"
+    created: "2026-09-03T12:26:02.648391988Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -203,7 +223,7 @@ entries:
     version: 26.02.0-3
   - apiVersion: v2
     appVersion: 26.02.0-2
-    created: "2026-09-03T09:32:08.593428598Z"
+    created: "2026-09-03T12:26:02.630408883Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -223,7 +243,7 @@ entries:
     version: 26.02.0-2
   - apiVersion: v2
     appVersion: 26.02.0-1
-    created: "2026-09-03T09:32:08.57579117Z"
+    created: "2026-09-03T12:26:02.61299708Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -243,7 +263,7 @@ entries:
     version: 26.02.0-1
   - apiVersion: v2
     appVersion: 25.11.1
-    created: "2026-09-03T09:32:08.556123682Z"
+    created: "2026-09-03T12:26:02.593736131Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -263,7 +283,7 @@ entries:
     version: 25.11.1
   - apiVersion: v2
     appVersion: 25.11.1-4
-    created: "2026-09-03T09:32:08.538276838Z"
+    created: "2026-09-03T12:26:02.576298Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -283,7 +303,7 @@ entries:
     version: 25.11.1-4
   - apiVersion: v2
     appVersion: 25.11.1-3
-    created: "2026-09-03T09:32:08.517498466Z"
+    created: "2026-09-03T12:26:02.557570068Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -303,7 +323,7 @@ entries:
     version: 25.11.1-3
   - apiVersion: v2
     appVersion: 25.11.1-2
-    created: "2026-09-03T09:32:08.498188064Z"
+    created: "2026-09-03T12:26:02.537396216Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -323,7 +343,7 @@ entries:
     version: 25.11.1-2
   - apiVersion: v2
     appVersion: 25.11.0
-    created: "2026-09-03T09:32:08.478411148Z"
+    created: "2026-09-03T12:26:02.5191116Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -343,7 +363,7 @@ entries:
     version: 25.11.0
   - apiVersion: v2
     appVersion: 25.11.0-5
-    created: "2026-09-03T09:32:08.460038966Z"
+    created: "2026-09-03T12:26:02.497935521Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -363,7 +383,7 @@ entries:
     version: 25.11.0-5
   - apiVersion: v2
     appVersion: 25.11.0-4
-    created: "2026-09-03T09:32:08.441006206Z"
+    created: "2026-09-03T12:26:02.47919976Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -383,7 +403,7 @@ entries:
     version: 25.11.0-4
   - apiVersion: v2
     appVersion: 25.11.0-3
-    created: "2026-09-03T09:32:08.420282015Z"
+    created: "2026-09-03T12:26:02.458211445Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -403,7 +423,7 @@ entries:
     version: 25.11.0-3
   - apiVersion: v2
     appVersion: 25.11.0-2
-    created: "2026-09-03T09:32:08.402570824Z"
+    created: "2026-09-03T12:26:02.439768592Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -423,7 +443,7 @@ entries:
     version: 25.11.0-2
   - apiVersion: v2
     appVersion: 25.11.0-1
-    created: "2026-09-03T09:32:08.382486859Z"
+    created: "2026-09-03T12:26:02.417437155Z"
     dependencies:
     - condition: prometheus.enabled
       name: prometheus
@@ -443,7 +463,7 @@ entries:
     version: 25.11.0-1
   - apiVersion: v2
     appVersion: 25.08.1
-    created: "2026-09-03T09:32:08.36279122Z"
+    created: "2026-09-03T12:26:02.397897768Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 77c04bc95e199448c686770b3c9ca54190677bfd491e3661ed048fe560dc3c59
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -454,7 +474,7 @@ entries:
     version: 25.08.1
   - apiVersion: v2
     appVersion: 25.08.1-1
-    created: "2026-09-03T09:32:08.360801315Z"
+    created: "2026-09-03T12:26:02.396080087Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: fa0404dfa86ba11498495673097f124a8d5bc0ad500b4a6a5777e808cd2a9193
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -465,7 +485,7 @@ entries:
     version: 25.08.1-1
   - apiVersion: v2
     appVersion: 25.08.0
-    created: "2026-09-03T09:32:08.356541807Z"
+    created: "2026-09-03T12:26:02.394010967Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 8494ed4eaa9638d9a21c3da1360fec6f3d19f2d9e183f3cf7ffec0b9a129fb89
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -476,7 +496,7 @@ entries:
     version: 25.08.0
   - apiVersion: v2
     appVersion: 25.08.0-1
-    created: "2026-09-03T09:32:08.354179194Z"
+    created: "2026-09-03T12:26:02.390702268Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 55af32a56b29f72f5ad35b28e66b00e711e228f741ea71bbdf3ab24f1085259c
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -487,7 +507,7 @@ entries:
     version: 25.08.0-1
   - apiVersion: v2
     appVersion: 25.05.2
-    created: "2026-09-03T09:32:08.352400876Z"
+    created: "2026-09-03T12:26:02.388181629Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 8f895a926a45940a1f4dddff6bd58609b2eee4204ef8a8db86860f769dbceb2a
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -498,7 +518,7 @@ entries:
     version: 25.05.2
   - apiVersion: v2
     appVersion: 25.05.2-rc1
-    created: "2026-09-03T09:32:08.350589614Z"
+    created: "2026-09-03T12:26:02.386320387Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 3d5d904c56bbca371ddddfe19bc7cecb95b84c455ad9533c9058fae30d98d44e
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -509,7 +529,7 @@ entries:
     version: 25.05.2-rc1
   - apiVersion: v2
     appVersion: 25.05.1
-    created: "2026-09-03T09:32:08.347079171Z"
+    created: "2026-09-03T12:26:02.384382763Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 3a378b5699e958621b11db399a610925308fa87f6f184bb897d5e5523a0c0a95
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -520,7 +540,7 @@ entries:
     version: 25.05.1
   - apiVersion: v2
     appVersion: 25.05.1-3
-    created: "2026-09-03T09:32:08.34483965Z"
+    created: "2026-09-03T12:26:02.382391115Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 9a1befd847a84183fead685dd7e5a062699db111a8dabe1383376078437e777e
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -531,7 +551,7 @@ entries:
     version: 25.05.1-3
   - apiVersion: v2
     appVersion: 25.05.1-2
-    created: "2026-09-03T09:32:08.343013572Z"
+    created: "2026-09-03T12:26:02.378391084Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: e029caebf57479821040f8749b7d76b28d1cc077bc9cc6e989e9c8423a3d2492
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -542,7 +562,7 @@ entries:
     version: 25.05.1-2
   - apiVersion: v2
     appVersion: 25.05.1-1
-    created: "2026-09-03T09:32:08.341206175Z"
+    created: "2026-09-03T12:26:02.376510088Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: aa8b855d81d4e34f734bcb6d53b996042d21f4748487c0cee3e8f01e8a5e376a
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -553,7 +573,7 @@ entries:
     version: 25.05.1-1
   - apiVersion: v2
     appVersion: 25.05.0
-    created: "2026-09-03T09:32:08.339301054Z"
+    created: "2026-09-03T12:26:02.374642753Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 8e6a8465712ef812ae9ef4b162c92c3b49bb549f44dccd5db63a346cc41bb608
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -564,7 +584,7 @@ entries:
     version: 25.05.0
   - apiVersion: v2
     appVersion: 25.05.0-1
-    created: "2026-09-03T09:32:08.33635551Z"
+    created: "2026-09-03T12:26:02.372430757Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 292987a418b91f23f6552e5b885d7c995ac53bb7e203ff103659833e7b921a65
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -575,7 +595,7 @@ entries:
     version: 25.05.0-1
   - apiVersion: v2
     appVersion: 1.11.6
-    created: "2026-09-03T09:32:08.307455241Z"
+    created: "2026-09-03T12:26:02.340721266Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 461858fe3472b9ca91ed6f22107b7fb35eb627a5aa61944a75427e4f68829aa8
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -586,7 +606,7 @@ entries:
     version: 1.11.6
   - apiVersion: v2
     appVersion: 1.11.6-rc1
-    created: "2026-09-03T09:32:08.305600275Z"
+    created: "2026-09-03T12:26:02.33879246Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 81866962f035469174f0088f962401d6895123cc93ca2cdbdd9bc07ae93e895a
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -597,7 +617,7 @@ entries:
     version: 1.11.6-rc1
   - apiVersion: v2
     appVersion: 1.11.5
-    created: "2026-09-03T09:32:08.303564779Z"
+    created: "2026-09-03T12:26:02.336591233Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: a4d04730f0494bde91350168062a167885d8281b32b15a4c12362952ffa0c9bf
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -608,7 +628,7 @@ entries:
     version: 1.11.5
   - apiVersion: v2
     appVersion: 1.11.5-rc1
-    created: "2026-09-03T09:32:08.299711916Z"
+    created: "2026-09-03T12:26:02.334494212Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 88a5c36216dff835275998bdbf339a28a885b999d12891166bccd666c286c35e
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -619,7 +639,7 @@ entries:
     version: 1.11.5-rc1
   - apiVersion: v2
     appVersion: 1.11.4
-    created: "2026-09-03T09:32:08.297943115Z"
+    created: "2026-09-03T12:26:02.330254362Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 75efffaacddbfacd14cc53325e43a70538508e1eab93667657c08d40b1577bae
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -630,7 +650,7 @@ entries:
     version: 1.11.4
   - apiVersion: v2
     appVersion: 1.11.4-rc3
-    created: "2026-09-03T09:32:08.296121573Z"
+    created: "2026-09-03T12:26:02.328257366Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 530818613677d0e4b150a34a9c36a234741d802e4cf366bf22998eac258c9c69
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -641,7 +661,7 @@ entries:
     version: 1.11.4-rc3
   - apiVersion: v2
     appVersion: 1.11.4-rc1
-    created: "2026-09-03T09:32:08.291853112Z"
+    created: "2026-09-03T12:26:02.326409979Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: ec8216dc62fb4c7d567f351b222580d463cb84d6dfa33b9d1a2f59d4e8744c18
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -652,7 +672,7 @@ entries:
     version: 1.11.4-rc1
   - apiVersion: v2
     appVersion: 1.11.3
-    created: "2026-09-03T09:32:08.289767944Z"
+    created: "2026-09-03T12:26:02.324323694Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 554b6142420492f20a4af856926b96083062470a4e3cad11afc5d5ea4f870b21
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -663,7 +683,7 @@ entries:
     version: 1.11.3
   - apiVersion: v2
     appVersion: 1.11.3-rc1
-    created: "2026-09-03T09:32:08.286638002Z"
+    created: "2026-09-03T12:26:02.322270658Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 64bc7ac0b8be5f6eb9126984eab37178ce711d7291e96214621bd4edf6a057d5
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -674,7 +694,7 @@ entries:
     version: 1.11.3-rc1
   - apiVersion: v2
     appVersion: 1.11.2
-    created: "2026-09-03T09:32:08.284034009Z"
+    created: "2026-09-03T12:26:02.317617964Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: cbf5d6f6fdf46e05ee675de744f9e1f3cda473b5b02b0860ddac5249c611b13b
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -685,7 +705,7 @@ entries:
     version: 1.11.2
   - apiVersion: v2
     appVersion: 1.11.2-rc1
-    created: "2026-09-03T09:32:08.282282966Z"
+    created: "2026-09-03T12:26:02.314838249Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: b56673d5da0f6aaf09ccb93bdd6121f0861bbddae8feb1510b3147e49fa9964e
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -696,7 +716,7 @@ entries:
     version: 1.11.2-rc1
   - apiVersion: v2
     appVersion: 1.11.1
-    created: "2026-09-03T09:32:08.280423573Z"
+    created: "2026-09-03T12:26:02.312826644Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: fcd2267cc2ad3ffb1115d82fe14a7b501ee6252640ccafe5553a5604e097eff8
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -707,7 +727,7 @@ entries:
     version: 1.11.1
   - apiVersion: v2
     appVersion: 1.11.1-rc1
-    created: "2026-09-03T09:32:08.278640328Z"
+    created: "2026-09-03T12:26:02.310888654Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: c7af2afa71072adeb42611a06b100129393a80a8d4bd856ab1c09c2d39d333cf
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -718,7 +738,7 @@ entries:
     version: 1.11.1-rc1
   - apiVersion: v2
     appVersion: 1.11.0
-    created: "2026-09-03T09:32:08.274905448Z"
+    created: "2026-09-03T12:26:02.308812625Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 2579553615f7838bfcb1c25733baae835465c0dbc820563a25f28736917b4ba3
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -729,7 +749,7 @@ entries:
     version: 1.11.0
   - apiVersion: v2
     appVersion: 1.11.0-rc3
-    created: "2026-09-03T09:32:08.272711682Z"
+    created: "2026-09-03T12:26:02.304814224Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 05ba274ce393d202ef10cf5ae8e26248161d05cf70287ac268a4dc2bcd38732a
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -740,7 +760,7 @@ entries:
     version: 1.11.0-rc3
   - apiVersion: v2
     appVersion: 1.10.2
-    created: "2026-09-03T09:32:08.27032745Z"
+    created: "2026-09-03T12:26:02.302910129Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 3ab7f915f80245c1c80a9a205ac64e11d3bb6f88da0d319be48665a5e376a813
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -751,7 +771,7 @@ entries:
     version: 1.10.2
   - apiVersion: v2
     appVersion: 1.10.2-rc1
-    created: "2026-09-03T09:32:08.268487524Z"
+    created: "2026-09-03T12:26:02.301063739Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 8d0d651fdf96961fdfb8d6372ac6be83fe4007aef2a8d3989df5464cc53e927c
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -762,7 +782,7 @@ entries:
     version: 1.10.2-rc1
   - apiVersion: v2
     appVersion: 1.10.1
-    created: "2026-09-03T09:32:08.266703496Z"
+    created: "2026-09-03T12:26:02.299259515Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 9f73c00299c1f518691b69d1fed65a714594521eca3f5f1324e3c379c8df4997
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -773,7 +793,7 @@ entries:
     version: 1.10.1
   - apiVersion: v2
     appVersion: 1.10.1-rc3
-    created: "2026-09-03T09:32:08.262509791Z"
+    created: "2026-09-03T12:26:02.293021652Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: e58e18f92589f2b28a25b7f40e94a5c7c79d3e382ffca34889054cd88233405b
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -784,7 +804,7 @@ entries:
     version: 1.10.1-rc3
   - apiVersion: v2
     appVersion: 1.10.0
-    created: "2026-09-03T09:32:08.260798245Z"
+    created: "2026-09-03T12:26:02.291187861Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: d650fa47bbc5ca82108f44c45589c74755de87d72014794df25e531e1c240bd7
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -795,7 +815,7 @@ entries:
     version: 1.10.0
   - apiVersion: v2
     appVersion: 1.10.0-rc3
-    created: "2026-09-03T09:32:08.259048377Z"
+    created: "2026-09-03T12:26:02.289305861Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 59107ff9d36ec04a73e790fe2f1329ff285df99633782e57d1bc0d9f2084b50d
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -806,7 +826,7 @@ entries:
     version: 1.10.0-rc3
   - apiVersion: v2
     appVersion: 1.9.5
-    created: "2026-09-03T09:32:08.333060997Z"
+    created: "2026-09-03T12:26:02.370271749Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: fe4495f78d12f4a9273dd487e0d1d814e5820a1342363a1ce5c3bdff36a84df6
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -817,7 +837,7 @@ entries:
     version: 1.9.5
   - apiVersion: v2
     appVersion: 1.9.5-rc2
-    created: "2026-09-03T09:32:08.330891664Z"
+    created: "2026-09-03T12:26:02.366670208Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 12e5954a7b0c29940bd3e510619a6255e6597bc57a6bb4399c9e7c2530a987c5
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -828,7 +848,7 @@ entries:
     version: 1.9.5-rc2
   - apiVersion: v2
     appVersion: 1.9.4
-    created: "2026-09-03T09:32:08.329028017Z"
+    created: "2026-09-03T12:26:02.364481138Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: a7b275567cfd737acd2badf06deb0c348417579f1e2dfbded15211b3996863ad
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -839,7 +859,7 @@ entries:
     version: 1.9.4
   - apiVersion: v2
     appVersion: 1.9.4-rc3
-    created: "2026-09-03T09:32:08.32701443Z"
+    created: "2026-09-03T12:26:02.36253702Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 657382aae23e617f84b9412ca2482eceb4c47c97e8bdd6796650a5ac1736949d
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -850,7 +870,7 @@ entries:
     version: 1.9.4-rc3
   - apiVersion: v2
     appVersion: 1.9.3
-    created: "2026-09-03T09:32:08.324106245Z"
+    created: "2026-09-03T12:26:02.360635038Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 657d3b846dda064a58552e701485b5473434dc99f71f112efb98cca21583d9bf
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -861,7 +881,7 @@ entries:
     version: 1.9.3
   - apiVersion: v2
     appVersion: 1.9.3-rc3
-    created: "2026-09-03T09:32:08.321348109Z"
+    created: "2026-09-03T12:26:02.358831793Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: cc97482c3aa12d8a175228b4cd10c3194f602a41586d7225130ac882b27040d2
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -871,7 +891,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.9.3-rc3.tgz
     version: 1.9.3-rc3
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.319597194Z"
+    created: "2026-09-03T12:26:02.355945882Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: ebd57e90f72f206066f458283e53149e2573334069276877151450d628b19d27
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -881,7 +901,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.9.2.tgz
     version: 1.9.2
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.318115425Z"
+    created: "2026-09-03T12:26:02.353040766Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: dbc29d6d073a6734964d31f6a33c209515eadf33fda146df1af4a0263db9a8b3
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -891,7 +911,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.9.2-rc1.tgz
     version: 1.9.2-rc1
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.316599732Z"
+    created: "2026-09-03T12:26:02.351381312Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: d17826e6c1cc452c411ca4ff6026ecb61e998f2b9df685a6328313f80b57227c
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -901,7 +921,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.9.1.tgz
     version: 1.9.1
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.314913489Z"
+    created: "2026-09-03T12:26:02.349445409Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 3f2462afd8ad1e6c442082e8f3b406f2a869957d7651e1d98e1ea357c15df86b
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -911,7 +931,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.9.0.tgz
     version: 1.9.0
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.312343857Z"
+    created: "2026-09-03T12:26:02.347707134Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 54db68b7a92e2777158df77ffa2eb3c0e7d76a3845835f93ea511cb813009982
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -921,7 +941,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.2.tgz
     version: 1.8.2
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.310140685Z"
+    created: "2026-09-03T12:26:02.346236953Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: a72533d3ffdcc4f86a9ad37cd9497908e27c8d774de1966d1183e803b3eedb3f
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -931,7 +951,7 @@ entries:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.1.tgz
     version: 1.8.1
   - apiVersion: v2
-    created: "2026-09-03T09:32:08.308824155Z"
+    created: "2026-09-03T12:26:02.342198505Z"
     description: 'Azul Intelligence Cloud: Optimizer Hub'
     digest: 5552ed6738340be6fdd8f5d2352a781235b0449065a15efa87af1a2a35e21b46
     home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
@@ -940,4 +960,4 @@ entries:
     urls:
     - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-1.8.0.tgz
     version: 1.8.0
-generated: "2026-09-03T09:32:08.25709701Z"
+generated: "2026-09-03T12:26:02.287094438Z"
