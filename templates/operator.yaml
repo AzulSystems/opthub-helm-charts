@@ -103,7 +103,6 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
-        runAsGroup: 10001
         fsGroup: 1001
       containers:
         - name: operator
@@ -119,7 +118,6 @@ spec:
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
           {{- end }}
           args:
-            {{- include "opthub.container.args" . | nindent 12 }}
             - -XX:+ExitOnOutOfMemoryError
             - -XX:MaxRAMPercentage=60
 {{- if .Values.operator.extraArguments }}

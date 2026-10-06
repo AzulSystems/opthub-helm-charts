@@ -58,12 +58,11 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
-        runAsGroup: 65532
         fsGroup: 65532
       containers:
         - name: gw-proxy
           image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy-distroless:v1.35-latest
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
