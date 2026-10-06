@@ -56,6 +56,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
+        runAsGroup: 10001
         fsGroup: 1001
       {{- if .Values.logStore.spec }}
       {{- .Values.logStore.spec | toYaml | nindent 6 }}
@@ -103,6 +104,7 @@ spec:
                 key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
 {{- end }}
         args:
+        {{- include "opthub.container.args" . | nindent 8 }}
         - "-XX:+ExitOnOutOfMemoryError"
         - "-XX:MaxRAMPercentage=60"
         - "-XX:-OmitStackTraceInFastThrow"
