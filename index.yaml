@@ -2,26 +2,6 @@ apiVersion: v1
 entries:
   azul-opthub:
   - apiVersion: v2
-    appVersion: 26.11.0-1
-    created: "2026-10-07T11:49:34.15932522Z"
-    dependencies:
-    - condition: prometheus.enabled
-      name: prometheus
-      repository: https://prometheus-community.github.io/helm-charts
-      version: 27.46.0
-    - condition: grafana.enabled
-      name: grafana
-      repository: https://grafana.github.io/helm-charts
-      version: 8.10.4
-    description: 'Azul Intelligence Cloud: Optimizer Hub'
-    digest: 7184aa882089b2a26148465c4c77c1d91630e7177de0aa2ac31fa9b59d49ec2c
-    home: https://www.azul.com/products/intelligence-cloud/cloud-native-compiler/
-    icon: https://www.azul.com/wp-content/themes/azul/dist/img/logo.svg
-    name: azul-opthub
-    urls:
-    - https://AzulSystems.github.io/opthub-helm-charts/azul-opthub-26.11.0-1.tgz
-    version: 26.11.0-1
-  - apiVersion: v2
     appVersion: 26.08.1-2
     created: "2026-10-07T11:49:34.142092322Z"
     dependencies:
