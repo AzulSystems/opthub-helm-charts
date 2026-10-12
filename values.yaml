@@ -98,6 +98,8 @@ compileArtifact:
     keepCompilerCrashArtifactsFor: "P30D"
     cleanupInterval: "P1D"
 
+compilerEngineUploadTimeout: "PT30S"
+
 readyNowOrchestrator:
   debugInfoHistoryLength: 100
   completedAfter: "PT24H"

@@ -98,6 +98,7 @@
     readynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}
     gateway.internal.grpc.server.port={{ .Values.gateway.ports.internalGrpcPort }}
     gateway-pod.quarkus.grpc.server.port={{ .Values.gateway.ports.serviceGrpcPort }}
+    engine.upload-timeout={{ .Values.compilerEngineUploadTimeout }}
 {{- if .Values.compilations.concurrencyBoost }}
     vm.default-concurency-boost={{ .Values.compilations.concurrencyBoost }}
 {{- end }}
