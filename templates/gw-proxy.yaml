@@ -62,7 +62,7 @@ spec:
         fsGroup: 65532
       containers:
         - name: gw-proxy
-          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy-distroless:v1.35-latest
+          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.40-latest
           imagePullPolicy: Always
           securityContext:
             readOnlyRootFilesystem: true
