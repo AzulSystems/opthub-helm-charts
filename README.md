@@ -15,12 +15,10 @@ Optimizer Hub is shipped as a Kubernetes cluster which you provision and run on 
  
 The full installation instructions are available [on the Azul documentation website](https://docs.azul.com/optimizer-hub/installation/install-optimizer-hub).
 
+**Note:** By downloading and using Optimizer Hub Installer you are agreeing to the [Optimizer Hub Evaluation Agreement](https://www.azul.com/wp-content/uploads/Azul-Platform-Prime-Evaluation-Agreement.pdf).
+
 ## More Information
 
 * [Azul Platform Prime](https://www.azul.com/products/prime/)
 * [Optimizer Hub product page](https://www.azul.com/products/components/azul-optimizer-hub/)
 * [Optimizer Hub documentation](https://docs.azul.com/optimizer-hub/) 
-
-## Licensing
-
-The Helm Charts, templates, and configuration files in this repository are licensed under the MIT License (see [License.txt](License.txt)). The MIT License does not apply to Optimizer Hub, Cloud Native Compiler, or any other software or container images these Helm Charts deploy. Third-party charts pulled in as dependencies (Prometheus, Grafana) are subject to their own licenses.
