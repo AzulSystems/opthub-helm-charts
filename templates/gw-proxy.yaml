@@ -47,6 +47,7 @@ spec:
         {{- .Values.gwProxy.podTemplateLabels | toYaml | nindent 8 }}
         {{- end }}
       annotations:
+        "cluster-autoscaler.kubernetes.io/safe-to-evict": "false"
         checksum/envoy: {{ printf "%s%s%s%s" (include "envoy.config" .) (include "envoy.cds" .) (include "envoy.lds" .) (toJson .Values.ssl) | sha256sum }}
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
@@ -55,23 +56,24 @@ spec:
         {{- .Values.gwProxy.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
-        fsGroup: 65532
+      {{- include "opthub.podSecurityContext" (dict "name" "gwProxy" "component" .Values.gwProxy "default" "opthub.podSecurityContext.gwProxy.default") | nindent 6 }}
+      {{- with .Values.secrets.imagePull }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gwProxy.initContainers }}
+      initContainers: {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: gw-proxy
-          image: {{ .Values.registry.dockerhubMirror }}envoyproxy/envoy:distroless-v1.40-latest
-          imagePullPolicy: Always
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - all
+          {{- $image := .Values.gwProxy.image | default dict }}
+          image: {{ if $image.repository }}{{ $image.repository }}{{ else }}{{ with .Values.registry.dockerhubMirror }}{{ trimSuffix "/" . }}/{{ end }}envoyproxy/envoy{{ end }}:{{ $image.tag | default "distroless-v1.40-latest" }}
+          imagePullPolicy: {{ $image.pullPolicy | default "Always" }}
+          {{- include "opthub.containerSecurityContext" (dict "name" "gwProxy" "component" .Values.gwProxy) | nindent 10 }}
           {{- if .Values.gwProxy.command }}
           command: {{- .Values.gwProxy.command | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.gwProxy.extraEnv }}
+          env: {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
             - "-c /etc/envoy/envoy.yaml"
@@ -84,15 +86,15 @@ spec:
             - name: http
               containerPort: 8080
             - name: grpc
-              containerPort: 50051
+              containerPort: {{ .Values.gwProxy.ports.serviceGrpcPort }}
               {{- if .Values.grafana.enabled }}
             - name: grafana
               containerPort: 3000
               {{- end }}
           livenessProbe:
             httpGet:
-              path: /healthz
-              port: 8080
+              path: /server_info
+              port: 8000
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 2
@@ -116,6 +118,9 @@ spec:
               name: ssl-cert
               readOnly: true
 {{- end }}
+{{- with .Values.gwProxy.extraVolumeMounts }}
+{{- toYaml . | nindent 12 }}
+{{- end }}
 {{- if .Values.gwProxy.resources }}
           resources: {{- .Values.gwProxy.resources | toYaml | nindent 12 }}
 {{- end }}
@@ -128,21 +133,13 @@ spec:
           secret:
             secretName: {{ include "ssl.secretName" . }}
 {{- end }}
-{{- if eq true .Values.gwProxy.azureVirtualNodes }}
-      nodeSelector:
-        kubernetes.io/role: agent
-        kubernetes.io/os: linux
-        type: virtual-kubelet
-{{- else if .Values.gwProxy.nodeSelector }}
+{{- with .Values.gwProxy.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
+{{- if .Values.gwProxy.nodeSelector }}
       nodeSelector: {{- .Values.gwProxy.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if eq true .Values.gwProxy.azureVirtualNodes }}
-      tolerations:
-        - key: virtual-kubelet.io/provider
-          operator: Exists
-        - key: azure.com/aci
-          effect: NoSchedule
-{{- else if .Values.gwProxy.tolerations }}
+{{- if .Values.gwProxy.tolerations }}
       tolerations: {{- .Values.gwProxy.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.gwProxy.affinity }}
@@ -180,7 +177,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: log-store-headless
-  namespace: {{ .Release.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     app: log-store
 spec:

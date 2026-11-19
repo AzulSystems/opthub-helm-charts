@@ -17,6 +17,7 @@ metadata:
   {{- end }}
 {{- end }}
 
+{{- if include "rbac.create" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -59,6 +60,7 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "operator.serviceAccount" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
 
 ---
 apiVersion: apps/v1
@@ -100,23 +102,23 @@ spec:
       {{- if .Values.operator.spec }}
       {{- .Values.operator.spec | toYaml | nindent 6 }}
       {{- end }}
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 1001
+      {{- include "opthub.podSecurityContext" (dict "name" "operator" "component" .Values.operator "default" "opthub.podSecurityContext.default") | nindent 6 }}
+      {{- with .Values.secrets.imagePull }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.operator.initContainers }}
+      initContainers: {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: operator
           image: {{ .Values.registry.opthub }}/opthub-operator:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.operator.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - all
+          {{- include "opthub.containerSecurityContext" (dict "name" "operator" "component" .Values.operator) | nindent 10 }}
           {{- if .Values.operator.command }}
           command: {{- .Values.operator.command | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.operator.extraEnv }}
+          env: {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
             {{- include "opthub.container.args" . | nindent 12 }}
@@ -168,6 +170,9 @@ spec:
               readOnly: true
             - name: tmp-volume
               mountPath: /tmp
+{{- with .Values.operator.extraVolumeMounts }}
+{{- toYaml . | nindent 12 }}
+{{- end }}
       volumes:
         - name: config
           configMap:
@@ -180,22 +185,14 @@ spec:
 {{- if (((.Values.operator).resources).limits) }}
             sizeLimit: {{ get .Values.operator.resources.limits "ephemeral-storage" }}
 {{- end }}
+{{- with .Values.operator.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
       serviceAccountName: {{ include "operator.serviceAccount" . }}
-{{- if eq true .Values.operator.azureVirtualNodes }}
-      nodeSelector:
-        kubernetes.io/role: agent
-        kubernetes.io/os: linux
-        type: virtual-kubelet
-{{- else if .Values.operator.nodeSelector }}
+{{- if .Values.operator.nodeSelector }}
       nodeSelector: {{- .Values.operator.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if eq true .Values.operator.azureVirtualNodes }}
-      tolerations:
-        - key: virtual-kubelet.io/provider
-          operator: Exists
-        - key: azure.com/aci
-          effect: NoSchedule
-{{- else if .Values.operator.tolerations }}
+{{- if .Values.operator.tolerations }}
       tolerations: {{- .Values.operator.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.operator.affinity }}

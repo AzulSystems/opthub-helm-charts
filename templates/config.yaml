@@ -13,6 +13,9 @@
     readynoworchestrator.promotion.min-profile-size-per-generation={{ .Values.readyNowOrchestrator.promotion.minProfileSizePerGeneration }}
     readynoworchestrator.promotion.min-profile-duration-per-generation={{ .Values.readyNowOrchestrator.promotion.minProfileDurationPerGeneration }}
     opthub.synchronization.enabled={{ .Values.synchronization.enabled }}
+    opthub.configuration.cnc.enabled={{ ((.Values.compileBroker).enabled) | default false }}
+    opthub.mcp.enabled={{ (.Values.mgmtGateway.mcp).enabled | default false }}
+    opthub.configuration.logstore.enabled={{ ((.Values.logStore).enabled) | default false }}
     opthub.synchronization.peers={{ .Values.synchronization.peers }}
     opthub.synchronization.period={{ .Values.synchronization.period }}
     opthub.synchronization.delay={{ .Values.synchronization.initialDelay }}
@@ -23,13 +26,24 @@
   {{- if .Values.storage.s3.storageEndpoint }}
     quarkus.s3.endpoint-override={{ .Values.storage.s3.storageEndpoint }}
   {{- end }}
+  {{- if .Values.storage.s3.presignerEndpoint }}
+    blob-storage.s3.presigner-endpoint-override={{ .Values.storage.s3.presignerEndpoint }}
+  {{- end }}
     quarkus.s3.aws.region={{ .Values.storage.s3.region }}
+  {{- if .Values.storage.s3.compatibilityMode }}
+    quarkus.s3.chunked-encoding=false
+    quarkus.s3.checksum-validation=false
+  {{- end }}
 {{- else if eq "azure-blob" .Values.storage.blobStorageService }}
     blob-storage.azure-blob.endpoint={{ .Values.storage.azureBlob.endpoint }}
     blob-storage.azure-blob.authMethod={{ .Values.storage.azureBlob.authMethod }}
 {{- end }}
 {{- if ((.Values.compilationStreaming).enabled) }}
     compilation-streaming.enabled=true
+{{- if ((.Values.compilationStreaming).rebuilds) }}
+    compilation-streaming.rebuilds.number-of-runs={{ .Values.compilationStreaming.rebuilds.numberOfRuns }}
+    compilation-streaming.rebuilds.delay-seconds={{ .Values.compilationStreaming.rebuilds.delaySeconds }}
+{{- end }}
 {{- if (((.Values.compilationStreaming).eviction).buildRequestRetention) }}
     compilation-streaming.eviction.enabled={{ .Values.compilationStreaming.eviction.enabled }}
     compilation-streaming.eviction.build-request-retention={{ .Values.compilationStreaming.eviction.buildRequestRetention }}
@@ -37,6 +51,11 @@
 {{- end }}
 {{- if ((.Values.taskExecutor).enabled) }}
     task-executor.graceful.shutdown.timeout={{ max 0 (sub .Values.taskExecutor.terminationGracePeriodSeconds 5) }}
+  {{- if ((.Values.taskExecutor).blobReconciler) }}
+    task-executor.blob-reconciler.enabled={{ .Values.taskExecutor.blobReconciler.enabled }}
+    task-executor.blob-reconciler.interval={{ .Values.taskExecutor.blobReconciler.interval }}
+    task-executor.blob-reconciler.initial-delay={{ .Values.taskExecutor.blobReconciler.initialDelay }}
+  {{- end }}
 {{- end }}
     hazelcast.kubernetes.enabled=true
     hazelcast.kubernetes.namespace={{ .Release.Namespace }}
@@ -97,10 +116,9 @@
     readynoworchestrator.producers.max-promotable-generation={{ .Values.readyNowOrchestrator.producers.maxPromotableGeneration }}
     readynoworchestrator.producers.max-profile-size={{ .Values.readyNowOrchestrator.producers.maxProfileSize }}
     gateway.internal.grpc.server.port={{ .Values.gateway.ports.internalGrpcPort }}
-    gateway-pod.quarkus.grpc.server.port={{ .Values.gateway.ports.serviceGrpcPort }}
     engine.upload-timeout={{ .Values.compilerEngineUploadTimeout }}
 {{- if .Values.compilations.concurrencyBoost }}
-    vm.default-concurency-boost={{ .Values.compilations.concurrencyBoost }}
+    vm.default-concurrency-boost={{ .Values.compilations.concurrencyBoost }}
 {{- end }}
 {{- if .Values.gateway.resources }}
     gateway-pod.quarkus.grpc.server.instances={{ ceil .Values.gateway.resources.requests.cpu }}
@@ -154,18 +172,13 @@
     scaling.operator.cores-per-instance={{ .Values.operator.resources.requests.cpu }}
     scaling.task-executor.enabled={{ .Values.taskExecutor.enabled }}
     scaling.task-executor.cores-per-instance={{ .Values.taskExecutor.resources.requests.cpu }}
-{{- if .Values.compileArtifact.cleaner.enabled }}
-    cache-pod.compiler.artifact.cleanup.enabled={{ .Values.compileArtifact.cleaner.enabled }}
-    {{- if .Values.compileArtifact.cleaner.keepCompilerCrashArtifactsFor }}
-    cache-pod.compiler.artifact.cleanup.max-age={{ .Values.compileArtifact.cleaner.keepCompilerCrashArtifactsFor }}
+    diagnostic-artifact.cleanup.enabled={{ .Values.diagnosticArtifact.cleaner.enabled }}
+    {{- if .Values.diagnosticArtifact.cleaner.keepFor }}
+    diagnostic-artifact.cleanup.max-age={{ .Values.diagnosticArtifact.cleaner.keepFor }}
     {{- end }}
-    {{- if .Values.compileArtifact.cleaner.cleanupInterval }}
-    cache-pod.compiler.artifact.cleanup.interval={{ .Values.compileArtifact.cleaner.cleanupInterval }}
+    {{- if .Values.diagnosticArtifact.cleaner.cleanupInterval }}
+    diagnostic-artifact.cleanup.interval={{ .Values.diagnosticArtifact.cleaner.cleanupInterval }}
     {{- end }}
-    {{- if .Values.compileArtifact.cleaner.firstRunDelay }}
-    cache-pod.compiler.artifact.cleanup.first-run-delay={{ .Values.compileArtifact.cleaner.firstRunDelay }}
-    {{- end }}
-{{- end }}
     hazelcast-member-watchdog.enabled={{ .Values.hazelcast.watchdog.enabled }}
     hazelcast-member-watchdog.period={{ .Values.hazelcast.watchdog.period }}
     hazelcast-member-watchdog.timeout={{ .Values.hazelcast.watchdog.timeout }}
@@ -177,6 +190,7 @@ kind: ConfigMap
 immutable: true
 metadata:
   name: {{ include "quarkus-config.name" . }}
+  namespace: {{ .Release.Namespace }}
 data:
   opthub.properties: |
 {{ include "opthub.properties.content" .}}

@@ -51,54 +51,27 @@ spec:
         {{- .Values.mgmtGateway.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 1001
+      {{- include "opthub.podSecurityContext" (dict "name" "mgmtGateway" "component" .Values.mgmtGateway "default" "opthub.podSecurityContext.default") | nindent 6 }}
       {{- if .Values.mgmtGateway.spec }}
       {{- .Values.mgmtGateway.spec | toYaml | nindent 6 }}
+      {{- end }}
+      {{- with .Values.secrets.imagePull }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mgmtGateway.initContainers }}
+      initContainers: {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: mgmt-gateway
           image: {{ .Values.registry.opthub }}/opthub-mgmt-gateway:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.mgmtGateway.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - all
+          {{- include "opthub.containerSecurityContext" (dict "name" "mgmtGateway" "component" .Values.mgmtGateway) | nindent 10 }}
           {{- if .Values.mgmtGateway.command }}
           command: {{- .Values.mgmtGateway.command | toYaml | nindent 10 }}
           {{- end }}
           env:
-{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
-            - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
-            - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-{{- end }}
+{{- with include "blobStorage.envvars" . | trim }}{{- . | nindent 12 }}{{- end }}
+{{- with .Values.mgmtGateway.extraEnv }}{{- toYaml . | nindent 12 }}{{- end }}
           args:
             {{- include "opthub.container.args" . | nindent 12 }}
             - "-XX:+ExitOnOutOfMemoryError"
@@ -149,6 +122,9 @@ spec:
               readOnly: true
             - name: tmp-volume
               mountPath: /tmp
+{{- with .Values.mgmtGateway.extraVolumeMounts }}
+{{- toYaml . | nindent 12 }}
+{{- end }}
       volumes:
         - name: config
           configMap:
@@ -161,22 +137,14 @@ spec:
 {{- if (((.Values.mgmtGateway).resources).limits) }}
             sizeLimit: {{ get .Values.mgmtGateway.resources.limits "ephemeral-storage" }}
 {{- end }}
+{{- with .Values.mgmtGateway.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
       serviceAccountName: {{ include "mgmtGateway.serviceAccount" . }}
-{{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
-      nodeSelector:
-        kubernetes.io/role: agent
-        kubernetes.io/os: linux
-        type: virtual-kubelet
-{{- else if .Values.mgmtGateway.nodeSelector }}
+{{- if .Values.mgmtGateway.nodeSelector }}
       nodeSelector: {{- .Values.mgmtGateway.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if eq true .Values.mgmtGateway.azureVirtualNodes }}
-      tolerations:
-        - key: virtual-kubelet.io/provider
-          operator: Exists
-        - key: azure.com/aci
-          effect: NoSchedule
-{{- else if .Values.mgmtGateway.tolerations }}
+{{- if .Values.mgmtGateway.tolerations }}
       tolerations: {{- .Values.mgmtGateway.tolerations | toYaml | nindent 8 }}
 {{- end }}
 {{- if .Values.mgmtGateway.affinity }}

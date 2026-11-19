@@ -9,7 +9,11 @@ kind: ServiceAccount
 metadata:
   name: {{ include "taskExecutor.serviceAccount" . }}
   namespace: {{ .Release.Namespace }}
-    {{- with .Values.deployment.serviceAccount.annotations }}
+  {{- with .Values.deployment.serviceAccount.labels }}
+  labels:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.deployment.serviceAccount.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -53,54 +57,27 @@ spec:
         {{- .Values.taskExecutor.podTemplateAnnotations | toYaml | nindent 8 }}
         {{- end }}
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 1001
+      {{- include "opthub.podSecurityContext" (dict "name" "taskExecutor" "component" .Values.taskExecutor "default" "opthub.podSecurityContext.default") | nindent 6 }}
       {{- if .Values.taskExecutor.spec }}
       {{- .Values.taskExecutor.spec | toYaml | nindent 6 }}
+      {{- end }}
+      {{- with .Values.secrets.imagePull }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.taskExecutor.initContainers }}
+      initContainers: {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: task-executor
           image: {{ .Values.registry.opthub }}/opthub-task-executor:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.taskExecutor.versionSuffix }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - all
+          {{- include "opthub.containerSecurityContext" (dict "name" "taskExecutor" "component" .Values.taskExecutor) | nindent 10 }}
           {{- if .Values.taskExecutor.command }}
-          command: {{- .Values.taskExecutor.command | toYaml | nindent 8 }}
+          command: {{- .Values.taskExecutor.command | toYaml | nindent 10 }}
           {{- end }}
           env:
-{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "blobStorage.s3.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
-            - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
-            - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "azure.storage.secretName" . }}
-                  key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-{{- end }}
+{{- with include "blobStorage.envvars" . | trim }}{{- . | nindent 12 }}{{- end }}
+{{- with .Values.taskExecutor.extraEnv }}{{- toYaml . | nindent 12 }}{{- end }}
           args:
             {{- include "opthub.container.args" . | nindent 12 }}
             - "-XX:+ExitOnOutOfMemoryError"
@@ -152,6 +129,9 @@ spec:
               readOnly: true
             - name: tmp-volume
               mountPath: /tmp
+{{- with .Values.taskExecutor.extraVolumeMounts }}
+{{- toYaml . | nindent 12 }}
+{{- end }}
       volumes:
         - name: config
           configMap:
@@ -164,26 +144,18 @@ spec:
 {{- if (((.Values.taskExecutor).resources).limits) }}
             sizeLimit: {{ get .Values.taskExecutor.resources.limits "ephemeral-storage" }}
 {{- end }}
+{{- with .Values.taskExecutor.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
       terminationGracePeriodSeconds: {{ .Values.taskExecutor.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "taskExecutor.serviceAccount" . }}
-{{- if eq true .Values.taskExecutor.azureVirtualNodes }}
-      nodeSelector:
-        kubernetes.io/role: agent
-        kubernetes.io/os: linux
-        type: virtual-kubelet
-{{- else if .Values.taskExecutor.nodeSelector }}
+{{- if .Values.taskExecutor.nodeSelector }}
       nodeSelector: {{- .Values.taskExecutor.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if eq true .Values.taskExecutor.azureVirtualNodes }}
-      tolerations:
-        - key: virtual-kubelet.io/provider
-          operator: Exists
-        - key: azure.com/aci
-          effect: NoSchedule
-{{- else if .Values.taskExecutor.tolerations }}
+{{- if .Values.taskExecutor.tolerations }}
       tolerations: {{- .Values.taskExecutor.tolerations | toYaml | nindent 8 }}
-  {{- end }}
-{{- if and ( ne true .Values.taskExecutor.azureVirtualNodes ) .Values.taskExecutor.affinity }}
+{{- end }}
+{{- if .Values.taskExecutor.affinity }}
       affinity: {{- .Values.taskExecutor.affinity | toYaml | nindent 8 }}
 {{- end }}
 

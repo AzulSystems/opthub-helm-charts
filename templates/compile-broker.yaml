@@ -55,51 +55,24 @@ spec:
       {{- if .Values.compileBroker.spec }}
       {{- .Values.compileBroker.spec | toYaml | nindent 6 }}
       {{- end }}
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 1001
+      {{- include "opthub.podSecurityContext" (dict "name" "compileBroker" "component" .Values.compileBroker "default" "opthub.podSecurityContext.default") | nindent 6 }}
+      {{- with .Values.secrets.imagePull }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.compileBroker.initContainers }}
+      initContainers: {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: compile-broker
         image: {{ .Values.registry.opthub }}/opthub-compile-broker:{{ default .Chart.AppVersion .Values.appVersionOverride }}{{ default .Values.versionSuffix .Values.compileBroker.versionSuffix }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
-        securityContext:
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - all
+        {{- include "opthub.containerSecurityContext" (dict "name" "compileBroker" "component" .Values.compileBroker) | nindent 8 }}
         {{- if .Values.compileBroker.command }}
         command: {{- .Values.compileBroker.command | toYaml | nindent 8 }}
         {{- end }}
         env:
-{{- if and (eq "s3" .Values.storage.blobStorageService) .Values.secrets.blobStorage.s3.secretkey .Values.secrets.blobStorage.s3.accesskey }}
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.accessKeySecretKey }}
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "blobStorage.s3.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.s3.secretAccessKeySecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "sas-token" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.sasToken }}
-          - name: BLOB_STORAGE_AZURE_BLOB_SASTOKEN
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.sasTokenSecretKey }}
-{{- end }}
-{{- if and (eq "azure-blob" .Values.storage.blobStorageService) (eq "connection-string" .Values.storage.azureBlob.authMethod) .Values.secrets.blobStorage.azure.connectionString }}
-          - name: BLOB_STORAGE_AZURE_BLOB_CONNECTIONSTRING
-            valueFrom:
-              secretKeyRef:
-                name: {{ include "azure.storage.secretName" . }}
-                key: {{ .Values.secrets.blobStorage.azure.connectionStringSecretKey }}
-{{- end }}
+{{- with include "blobStorage.envvars" . | trim }}{{- . | nindent 10 }}{{- end }}
+{{- with .Values.compileBroker.extraEnv }}{{- toYaml . | nindent 10 }}{{- end }}
         args:
         {{- include "opthub.container.args" . | nindent 8 }}
         - "-XX:+ExitOnOutOfMemoryError"
@@ -151,6 +124,9 @@ spec:
             readOnly: true
           - name: tmp-volume
             mountPath: /tmp
+{{- with .Values.compileBroker.extraVolumeMounts }}
+{{- toYaml . | nindent 10 }}
+{{- end }}
       volumes:
         - name: config
           configMap:
@@ -163,26 +139,18 @@ spec:
 {{- if (((.Values.compileBroker).resources).limits) }}
             sizeLimit: {{ get .Values.compileBroker.resources.limits "ephemeral-storage" }}
 {{- end }}
+{{- with .Values.compileBroker.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
       terminationGracePeriodSeconds: {{ .Values.compileBroker.terminationGracePeriodSeconds }}
       serviceAccountName: {{ include "compileBroker.serviceAccount" . }}
-{{- if eq true .Values.compileBroker.azureVirtualNodes }}
-      nodeSelector:
-        kubernetes.io/role: agent
-        kubernetes.io/os: linux
-        type: virtual-kubelet
-{{- else if .Values.compileBroker.nodeSelector }}
+{{- if .Values.compileBroker.nodeSelector }}
       nodeSelector: {{- .Values.compileBroker.nodeSelector | toYaml | nindent 8 }}
 {{- end }}
-{{- if eq true .Values.compileBroker.azureVirtualNodes }}
-      tolerations:
-        - key: virtual-kubelet.io/provider
-          operator: Exists
-        - key: azure.com/aci
-          effect: NoSchedule
-{{- else if .Values.compileBroker.tolerations }}
+{{- if .Values.compileBroker.tolerations }}
       tolerations: {{- .Values.compileBroker.tolerations | toYaml | nindent 8 }}
 {{- end }}
-{{- if and ( ne true .Values.compileBroker.azureVirtualNodes ) .Values.compileBroker.affinity }}
+{{- if .Values.compileBroker.affinity }}
       affinity: {{- .Values.compileBroker.affinity | toYaml | nindent 8 }}
 {{- end }}
 

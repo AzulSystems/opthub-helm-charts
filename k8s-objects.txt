@@ -1,0 +1,55 @@
+# Kubernetes objects rendered by the Optimizer Hub Helm chart, for all supported values files.
+# To find objects to remove on upgrade, diff this file with the one from the release you upgrade to.
+#
+# Format: <apiVersion> <kind> <name>
+#   apiVersion  Kubernetes API group and version; "v1" is the core group (ConfigMap, Secret, Service, ...)
+#   name        the hash suffix of the Quarkus ConfigMap name is omitted, as it changes with its content
+#
+# Namespaced objects are in the namespace where Optimizer Hub is installed.
+# The monitoring objects are only installed when Grafana and Prometheus are enabled in the chart.
+
+# OptHub objects (namespaced)
+apps/v1 Deployment compile-broker
+apps/v1 Deployment gateway
+apps/v1 Deployment gw-proxy
+apps/v1 Deployment mgmt-gateway
+apps/v1 Deployment operator
+apps/v1 Deployment task-executor
+apps/v1 StatefulSet cache
+rbac.authorization.k8s.io/v1 Role opthub-cache-role
+rbac.authorization.k8s.io/v1 Role opthub-operator-role
+rbac.authorization.k8s.io/v1 RoleBinding opthub-cache-role-binding
+rbac.authorization.k8s.io/v1 RoleBinding opthub-operator-role-binding
+v1 ConfigMap gw-proxy
+v1 ConfigMap quarkus-config
+v1 Secret blob-storage-credentials
+v1 Service cache
+v1 Service compile-broker
+v1 Service gateway
+v1 Service gateway-headless
+v1 Service mgmt-gateway
+v1 ServiceAccount opthub-cache
+v1 ServiceAccount opthub-compile-broker
+v1 ServiceAccount opthub-gateway
+v1 ServiceAccount opthub-mgmt-gateway
+v1 ServiceAccount opthub-operator
+v1 ServiceAccount opthub-task-executor
+
+# Optional monitoring: Grafana and Prometheus (namespaced)
+apps/v1 Deployment grafana
+apps/v1 Deployment prometheus-server
+rbac.authorization.k8s.io/v1 Role grafana
+rbac.authorization.k8s.io/v1 RoleBinding grafana
+v1 ConfigMap grafana
+v1 ConfigMap grafana-config-dashboards
+v1 ConfigMap grafana-opthub-dashboard
+v1 ConfigMap prometheus-server
+v1 Secret grafana
+v1 Service grafana
+v1 Service grafana-headless
+v1 Service prometheus-server
+v1 ServiceAccount grafana
+
+# Cluster-scoped objects
+rbac.authorization.k8s.io/v1 ClusterRole prometheus-server
+rbac.authorization.k8s.io/v1 ClusterRoleBinding prometheus-server

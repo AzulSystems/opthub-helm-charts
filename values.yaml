@@ -3,9 +3,16 @@ clusterName: "cluster.local"
 
 autoscaler: true
 
+# The pod-level and container-level securityContext is configurable per component,
+# see the end of this file.
+
 # By default, this is points at the docker hub artifacts
 registry:
   opthub: "azul"
+  # Registry (and optional path) of a Docker Hub mirror used for the default gw-proxy (Envoy)
+  # image, e.g. "docker-mirror.example.com". Like registry.opthub, it has no trailing "/"
+  # (one is tolerated and ignored). Empty or null means no mirror.
+  # Ignored for gw-proxy when gwProxy.image.repository is set.
   dockerhubMirror: ""
 
 imagePullPolicy: "IfNotPresent"
@@ -19,6 +26,9 @@ simpleSizing:
   # The default number is the amount of vCores necessary to start
   # minimum required replicas of each component, so that the service is operational.
   vCores: 39
+  # Set to true to turn simple sizing off. `simpleSizing.disabled=true` is then added to
+  # opthub.properties. Nothing is rendered when false or unset, so simple sizing is enabled by default.
+  disabled: false
   # minVCores and maxVCores has the same formula as vCores, but applied
   # when autoscaling is enabled.
   minVCores: 39
@@ -37,6 +47,12 @@ simpleSizing:
 # used by Helm. This secret will then be used instead of creating new one.
 
 secrets:
+  # Standard Kubernetes `imagePullSecrets` entries ({name: <secret>}) rendered into the PodSpec
+  # of every workload (gateway, gwProxy, operator, taskExecutor, mgmtGateway, compileBroker,
+  # cache and logStore). The Secrets must already exist. Unset by default.
+  imagePull:
+  #  - name: my-registry-secret
+
   blobStorage:
     s3:
       # name of existing Secret object to use. New Secret is created if name is empty
@@ -71,13 +87,31 @@ deployment:
     annotations: {}
     existingServiceAccount: ""
 
+rbac:
+  # Create the namespaced Roles and RoleBindings managed by the chart.
+  # Set to false when RBAC is managed outside the chart. ServiceAccounts are not affected by
+  # this setting; use existingServiceAccount to select or reuse them.
+  # When false, grant the ServiceAccount of each component the permissions of the chart's
+  # Roles, in the release namespace. The chart templates are the source of truth for the rules;
+  # `helm template` with the default value renders them (see the objects of kind Role).
+  create: true
+
+logStore:
+  enabled: false
+  existingServiceAccount: ""
 
 ssl:
   enabled: false
   value:
     cert: ""
     key: ""
+  # Chart-relative file paths, read only when ssl.value.* is empty.
   path:
+    cert: "cert.pem"
+    key: "key.pem"
+  # File names under /opt/ssl/ that envoy reads. They are also the keys of the generated Secret,
+  # or must match the keys of ssl.existingSecret when it is set.
+  file:
     cert: "cert.pem"
     key: "key.pem"
   existingSecret: ""
@@ -92,10 +126,10 @@ compilations:
     limitPerCompileBroker: 30
     lookupParallelism: 120 # calculated as limitPerCompileBroker * 4
 
-compileArtifact:
+diagnosticArtifact:
   cleaner:
     enabled: true
-    keepCompilerCrashArtifactsFor: "P30D"
+    keepFor: "P30D"
     cleanupInterval: "P1D"
 
 compilerEngineUploadTimeout: "PT30S"
@@ -170,6 +204,16 @@ storage:
     commonBucket: <your-bucket>
     region: "us-west-2"
     storageEndpoint: "" # override to set your s3 endpoint if using S3 compatible storage service
+    # Optional. Endpoint embedded in all presigned URLs OptHub creates: profile downloads by the JVM, heap dump
+    # uploads and downloads, diagnostic artifact downloads. Set it when the consumers cannot reach storageEndpoint,
+    # e.g. storageEndpoint is an in-cluster address (http://s3.cluster.local) and the JVM runs outside the cluster
+    # (https://s3.example.com). Must be exactly the address the consumers will call, and must also be reachable from
+    # the OptHub pods, which upload heap dumps through a presigned URL. If empty, storageEndpoint is used.
+    presignerEndpoint: ""
+    # Set to true for S3-compatible storage services that do not support the AWS SDK default behavior
+    # (e.g. VAST, Alibaba OSS). Sets quarkus.s3.chunked-encoding=false and quarkus.s3.checksum-validation=false
+    # for all components using the S3 client. Applies only when blobStorageService is s3. Leave false for AWS S3.
+    compatibilityMode: false
 
 hazelcast:
   watchdog:
@@ -183,16 +227,24 @@ compilationStreaming:
   eviction:
     enabled: true
     buildRequestRetention: P7D
-
-#################################################################################
-# The rest of the settings are only to show you the values used internally.     #
-# Changing the values below will not have any affect on your CNC cluster.       #
-#################################################################################
+  # If a JVM with profileName for which a profile is already promoted, connects, and there is no Compilation Stream built
+  # yet, OptHub will trigger multiple stream rebuilds. This can happen, e.g., if a new CPU type is used for running the
+  # same profile, or even a minor difference, such as a different debug flag used by the client. We don't know when enough
+  # compilations are cached for the new client configuration, so we schedule several delayed rebuilds.
+  # These options might change in a future release, we plan to implement metric-based rebuilds instead of heuristic-based.
+  rebuilds:
+    numberOfRuns: 3
+    delaySeconds: 600
 
 gateway:
+  # Number of gateway replicas. Rendered as `spec.replicas` of the gateway Deployment.
+  # When the autoscaler is enabled (gateway.autoscaler.enabled, the default), the operator
+  # rescales the Deployment at runtime, so this is only the initial replica count.
   replicas: 1
   autoscaler:
     enabled: true
+    # Minimum number of gateway replicas. Rendered as `scaling.gateway.min-replicas`
+    # in the generated configuration.
     min: 1
     max:
   resources:
@@ -208,17 +260,22 @@ gateway:
   nodeSelector:
     kubernetes.io/arch: amd64
   service:
-    type: "NodePort"
+    # Gateway Service type: NodePort, ClusterIP or LoadBalancer.
+    # When unset, the effective default depends on the gwProxy mode:
+    # LoadBalancer if gwProxy.enabled=true, NodePort if gwProxy.enabled=false.
+    # type: NodePort
     httpEndpoint:
       enabled: false
       port: 8080
     grpc:
       port: 50051
-    # annotations: {}
+    # Annotations added to the gateway Service.
+    annotations: {}
   ports:
-    serviceGrpcPort: 50051
+    # The gateway serves gRPC on its HTTP port (quarkus.grpc.server.use-separate-server=false)
+    serviceGrpcPort: 8080
     internalGrpcPort: 50052
-  tolerations: {}
+  tolerations: []
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
@@ -228,10 +285,49 @@ gateway:
     #environment: "dev"
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 gwProxy:
   enabled: true
   replicas: 1
+  image:
+    # Full image path including the registry, without the tag.
+    # When set, it is used as is and registry.dockerhubMirror is ignored.
+    repository: ""
+    # Image tag. When empty, the chart's default Envoy tag (distroless-v1.40-latest) is used. The tag is
+    # used as is, so include the "distroless-" prefix when overriding it for the default repository
+    # (envoyproxy/envoy). To switch to "non-distroless" use tag like v1.40-latest.
+    # Can be combined with the default  repository (including the registry.dockerhubMirror registry)
+    # or with a custom repository.
+    tag: ""
+    pullPolicy: Always
+  # Address family used by the Envoy admin endpoint and all listeners. One of:
+  #  - dualStack: bind to the IPv6 wildcard "::" with ipv4_compat enabled,
+  #    accepting both IPv6 and IPv4 connections. Default.
+  #  - ipv4: bind to the IPv4 wildcard "0.0.0.0".
+  #    Use on nodes where IPv6 is disabled.
+  # Unsupported non-empty values cause Helm rendering to fail.
+  bindMode: dualStack
   resources:
     requests:
       cpu: "7"
@@ -246,9 +342,11 @@ gwProxy:
   circuitBreakers:
     maxRequests: "3072"
     maxConnections: "3072"
+  ports:
+    serviceGrpcPort: 50051
   nodeSelector:
     kubernetes.io/arch: amd64
-  tolerations: {}
+  tolerations: []
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
@@ -258,6 +356,27 @@ gwProxy:
   podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, ssl-cert). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 compileBroker:
   enabled: true
@@ -279,7 +398,7 @@ compileBroker:
       ephemeral-storage: "8Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
-  tolerations: {}
+  tolerations: []
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
@@ -289,6 +408,27 @@ compileBroker:
   podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 cache:
   replicas: 1
@@ -309,7 +449,7 @@ cache:
       ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
-  tolerations: {}
+  tolerations: []
   affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
@@ -319,12 +459,37 @@ cache:
   podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
   ports:
     internalGrpcPort: 50071
 
 taskExecutor:
   enabled: true
   terminationGracePeriodSeconds: 120
+  blobReconciler:
+    enabled: true
+    interval: "P7D"
+    initialDelay: "PT12H"
   resources:
     requests:
       # Do not use non-numerical values such as 200m, otherwise the templating logic will break.
@@ -337,11 +502,35 @@ taskExecutor:
       ephemeral-storage: "10Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
-  tolerations: {}
+  tolerations: []
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
+  applicationAnnotations: # Additional annotations for Deployment/StatefulSet
   podTemplateLabels: # Additional labels for POD
+  podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 operator:
   enabled: true
@@ -362,7 +551,7 @@ operator:
       ephemeral-storage: "1Gi"
   nodeSelector:
     kubernetes.io/arch: amd64
-  tolerations: {}
+  tolerations: []
   affinity: {}
   applicationLabels:
     #release: "stable"
@@ -371,6 +560,27 @@ operator:
     #environment: "dev"
   podTemplateAnnotations: # Additional annotations for POD
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 mgmtGateway:
   resources:
@@ -387,8 +597,15 @@ mgmtGateway:
     type: "LoadBalancer"
     httpEndpoint:
       port: 8080
+    # Annotations added to the mgmt-gateway Service.
+    annotations: {}
+  # The MCP server
+  mcp:
+    enabled: false
   nodeSelector:
     kubernetes.io/arch: amd64
+  tolerations: []
+  affinity: {}
   applicationLabels: # Additional labels for Deployment/StatefulSet
     #release: "stable"
   applicationAnnotations: # Additional annotations for Deployment/StatefulSet
@@ -397,10 +614,176 @@ mgmtGateway:
   podTemplateAnnotations: # Additional annotations for POD
   serviceLabels: # Additional labels for Service
   existingServiceAccount: ""
+  # Additional init containers for the POD (standard Kubernetes container spec). Unset by default.
+  #initContainers:
+  #  - name: dummy-init
+  #    image: busybox:1.36
+  #    command: ["sh", "-c", "echo init"]
+  # Additional environment variables for the container (standard Kubernetes env entries). Unset by default.
+  #extraEnv:
+  #  - name: MY_VAR
+  #    value: "my-value"
+  # Additional PodSpec volumes (standard Kubernetes volume spec), appended after the chart-defined ones. Unset by default.
+  # Names must not clash with the chart-defined volumes (config, tmp-volume). Avoiding duplicates is the user's responsibility.
+  #extraVolumes:
+  #  - name: custom-certs
+  #    secret:
+  #      secretName: my-certs
+  # Additional volumeMounts for the main container (standard Kubernetes volumeMount spec), appended after the chart-defined ones.
+  # Needed to mount extraVolumes into the application container. Unset by default.
+  #extraVolumeMounts:
+  #  - name: custom-certs
+  #    mountPath: /etc/custom-certs
+  #    readOnly: true
 
 # Monitoring section
 grafana:
   enabled: false
+  # Default admin password: the same `admin` that a new Grafana starts with. Grafana asks to set
+  # a new password at the first login. SET YOUR OWN PASSWORD before exposing Grafana, either here
+  # or with `admin.existingSecret`. Without any password the Grafana subchart generates a random
+  # one on every render, so `helm template` output is not stable.
+  # - If the login form is disabled (`grafana.ini` auth.disable_login_form), the password prompt
+  #   cannot be reached and `admin` stays valid, so change the password here in that case.
+  # - Grafana reads this password only when it creates its database. With `grafana.persistence`
+  #   enabled, changing it later (or upgrading an install that had the generated one) does not
+  #   change the live password, and the Secret then no longer matches it.
+  adminPassword: admin
 
 prometheus:
   enabled: false
+
+##########################################################################################
+# Pod-level and container-level securityContext
+#
+# Configurable per component for: gateway, mgmtGateway, compileBroker, cache, operator,
+# taskExecutor, logStore and gwProxy, with two independent keys:
+#   <component>.podSecurityContext        -> the PodSpec `securityContext`
+#   <component>.containerSecurityContext  -> the `securityContext` of the component container
+# For example `mgmtGateway.podSecurityContext`.
+#
+# The keys are intentionally not declared in this file. The defaults are built into the
+# templates and are rendered when a key is not set:
+#   pod, all components but gwProxy: runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001,
+#                                    fsGroup: 10001
+#   pod, gwProxy:                    runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532,
+#                                    fsGroup: 65532
+#   container, all components:       readOnlyRootFilesystem: true, allowPrivilegeEscalation: false,
+#                                    capabilities.drop: [ALL]
+#
+# Semantics:
+#  - Key absent (or null): the defaults above are rendered unchanged.
+#  - Non-empty map: REPLACES the defaults as a whole, there is no field-level merge. Any valid
+#    Kubernetes securityContext field is accepted; list every field you want to keep.
+#  - Empty map {}: removes the defaults, `securityContext: {}` is rendered.
+#  - A value that is not a map fails the render.
+#  - The pod-level and container-level keys are independent: setting one does not affect the
+#    defaults of the other.
+#  - <component>.spec.securityContext is rejected, because it would render a second
+#    `securityContext` key; use <component>.podSecurityContext instead. Other <component>.spec
+#    fields are passed through as before, see "Container arguments, probes and raw pod
+#    spec" below. gwProxy has no <component>.spec passthrough.
+#  - Several -f files: override maps from different files are deep-merged with each other
+#    (standard Helm behavior), and the merged map then replaces the defaults. `{}` in a later
+#    file does not clear a non-empty map from an earlier file. A null field at the top level of
+#    the map in a later file removes that field from the merged map. Nulls in nested maps (for
+#    example `capabilities.add: null`) are rendered as they are.
+#
+# Example: no pod-level securityContext, custom container-level securityContext.
+#   mgmtGateway:
+#     podSecurityContext: {}
+#     containerSecurityContext:
+#       allowPrivilegeEscalation: false
+#       readOnlyRootFilesystem: true
+#       capabilities:
+#         drop: [ALL]
+##########################################################################################
+
+##########################################################################################
+# Extra volumes and volume mounts
+#
+# Adds user-defined volumes to the pods of Optimizer Hub workloads and mounts them into the
+# main application container, with two independent keys:
+#   <component>.extraVolumes       -> entries appended to the PodSpec `volumes`, after the
+#                                     chart-defined volumes
+#   <component>.extraVolumeMounts  -> entries appended to the `volumeMounts` of the main
+#                                     container, after the chart-defined volume mounts
+# For example `gateway.extraVolumes`.
+#
+# Both keys take standard Kubernetes `volume` and `volumeMount` entries, which are rendered as
+# given. They are unset by default; when unset, the rendered manifests are unchanged.
+#
+# extraVolumeMounts is a technical companion of extraVolumes, not a separate feature. A volume
+# that is not mounted is usable only by init containers, so mounting it into the application
+# container needs its own key. You can set extraVolumes alone, for example to share a volume
+# with `initContainers` only. Init containers declare their own `volumeMounts` in
+# `initContainers`; extraVolumeMounts applies to the main container only.
+#
+# Applicable workloads: gateway, gwProxy, operator, taskExecutor, mgmtGateway, compileBroker,
+# cache and logStore.
+#  - gwProxy is included. Its main container is the Envoy proxy, so gwProxy.extraVolumeMounts
+#    mounts into the Envoy container. The Envoy configuration is generated by the chart and
+#    does not read extra files on its own.
+#  - logStore renders a pod only in the `dedicatedService` deployment mode.
+#
+# The chart-defined volumes are named `config` and `tmp-volume` (gwProxy: `config` and, when
+# ssl.enabled, `ssl-cert`). The chart does not check for duplicate names. Choosing names that
+# do not clash is the responsibility of the user; Kubernetes rejects a pod with duplicate
+# volume names.
+#
+# Example:
+#   gateway:
+#     extraVolumes:
+#       - name: custom-certs
+#         secret:
+#           secretName: my-certs
+#     extraVolumeMounts:
+#       - name: custom-certs
+#         mountPath: /etc/custom-certs
+#         readOnly: true
+##########################################################################################
+
+##########################################################################################
+# Container arguments, probes and raw pod spec
+#
+# Optional keys that are read per component. They are unset by default and are shown in the
+# example below instead of being declared with a value; when a key is not set, the chart
+# renders its built-in behavior unchanged.
+#
+#   <component>.extraArguments
+#       List of strings appended to the container `args`, after the chart-managed args.
+#       For example `extraArguments: ["-Xlog:gc"]`.
+#   <component>.extraArgumentsMap
+#       Map rendered as `-D<key>=<value>` container args, after the chart-managed args and
+#       after extraArguments. For example `extraArgumentsMap: {my.property: "value"}`.
+#   <component>.disableKubernetesProbes
+#       When true, removes the readiness, liveness and startup probes of that workload only.
+#       Other workloads keep their probes. Any other value keeps the probes.
+#   <component>.spec
+#       Raw PodSpec fields, rendered as given into the pod template `spec` of the workload.
+#       There is no merge with the fields that the chart renders itself. Do not use it for
+#       a field that has a first-class key; use these keys instead:
+#         securityContext          -> <component>.podSecurityContext (spec.securityContext is rejected)
+#         imagePullSecrets         -> secrets.imagePull
+#         initContainers           -> <component>.initContainers
+#         volumes, volumeMounts    -> <component>.extraVolumes, <component>.extraVolumeMounts
+#       If a field is set both through spec and through the first-class key (for example
+#       spec.imagePullSecrets together with secrets.imagePull), the chart renders the field
+#       twice in the pod spec. The result is invalid YAML (duplicate key) and Kubernetes
+#       tooling rejects it. Set each field in one place only.
+#
+# Applicable workloads (all four keys): gateway, taskExecutor, operator, mgmtGateway,
+# compileBroker, cache and logStore. gwProxy ignores these keys. logStore renders a pod only
+# in the `dedicatedService` deployment mode.
+#
+# Example:
+#   compileBroker:
+#     extraArguments: ["-Xlog:gc"]
+#     extraArgumentsMap:
+#       my.property: "value"
+#     disableKubernetesProbes: true
+#     spec:
+#       hostNetwork: true
+#
+# Related: simpleSizing.disabled is declared in the `simpleSizing` block above.
+##########################################################################################

@@ -1,3 +1,9 @@
+# AI Tool Usage BOM
+# ------------------
+#
+# AI Tools Used:
+# - Anthropic Claude Haiku 5.5
+#
 ---
 ###################################################################################################
 # Minikube uses a reduced resource setup, which might cause clients to go to local fallback.      #
@@ -87,10 +93,10 @@ storage:
   blobStorageService: s3
   s3:
     commonBucket: opthub
-    storageEndpoint: http://minio.minio-dev.svc.cluster.local:9000
+    storageEndpoint: http://blobstorage.blobstorage-dev.svc.cluster.local:9000
 
 secrets:
   blobStorage:
     s3:
-      accesskey: minioadmin
-      secretkey: minioadmin
+      accesskey: blobstorage
+      secretkey: blobstorage123

@@ -1,3 +1,18 @@
+{{- /*
+Single decision point for the Envoy bind address. "ipv4_compat: true" is valid only with an IPv6 bind,
+so the address and ipv4_compat are always rendered together from gwProxy.bindMode.
+*/ -}}
+{{- define "envoy.bindAddress" -}}
+{{- $mode := .Values.gwProxy.bindMode | default "dualStack" -}}
+{{- if eq $mode "dualStack" -}}
+address: "::"
+ipv4_compat: true
+{{- else if eq $mode "ipv4" -}}
+address: "0.0.0.0"
+{{- else -}}
+{{- fail (printf "gwProxy.bindMode must be one of \"dualStack\" or \"ipv4\", got %q" (toString $mode)) -}}
+{{- end -}}
+{{- end }}
 {{- define "envoy.config" -}}
 overload_manager:
   refresh_interval: 0.25s
@@ -31,8 +46,7 @@ layered_runtime:
 admin:
   address:
     socket_address:
-      address: "::"
-      ipv4_compat: true
+      {{- include "envoy.bindAddress" . | nindent 6 }}
       port_value: 8000
 node:
   cluster: test-cluster
@@ -158,8 +172,7 @@ resources:
     name: listener_8001
     address:
       socket_address:
-        address: "::"
-        ipv4_compat: true
+        {{- include "envoy.bindAddress" . | nindent 8 }}
         port_value: 8001
     per_connection_buffer_limit_bytes: 32768  # 32 KiB
     filter_chains:
@@ -184,8 +197,7 @@ resources:
     name: listener_8080
     address:
       socket_address:
-        address: "::"
-        ipv4_compat: true
+        {{- include "envoy.bindAddress" . | nindent 8 }}
         port_value: 8080
     per_connection_buffer_limit_bytes: 32768  # 32 KiB
     filter_chains:
@@ -233,16 +245,24 @@ resources:
                           body:
                             inline_string: "Azul Optimizer Hub - serves JVMs"
                       # Internal /q/health endpoint routed to the gateway Quarkus /q/health endpoint
-                      # This is here for compatibility reasons. It is not the healtcheck intended to be used externally
+                      # This is here for compatibility reasons. It is not the health check intended to be used externally
                       # to decide status of Opthub cluster, e.g. for the use by load balancers.
                       - match:
                            path: "/q/health"
                         route:
                           timeout: 600s
                           cluster: gateway_http
-                          prefix_rewrite: "/q/health"
                       - match:
-                           path: "/opthub-health"
+                          path: "/api/opthub-health/healthy"
+                        route:
+                          timeout: 600s
+                          cluster: gateway_http
+                      - match:
+                          # This is a b/w compatibility path we used to publish in our documentation in releases up to 26.08. Some
+                          # customers might be using it, but it worked only if `gw-proxy` was used, which we recommend the
+                          # users not to use; we recommended using their own load balancer, in which case the health check endpoint
+                          # was exposed on `/api/opthub-health/healthy`
+                          path: "/opthub-health"
                         route:
                           timeout: 600s
                           cluster: gateway_http
@@ -258,9 +278,8 @@ resources:
     name: listener_grpc_service
     address:
       socket_address:
-        address: "::"
-        ipv4_compat: true
-        port_value: {{ .Values.gateway.ports.serviceGrpcPort }}
+        {{- include "envoy.bindAddress" . | nindent 8 }}
+        port_value: {{ .Values.gwProxy.ports.serviceGrpcPort }}
 {{- if .Values.ssl.enabled }}
     listener_filters:
       - name: "envoy.filters.listener.tls_inspector"
@@ -329,17 +348,16 @@ resources:
               alpn_protocols: "h2,http/1.1"
               tls_certificates:
                 - certificate_chain:
-                    filename: "/opt/ssl/{{ .Values.ssl.path.cert }}"
+                    filename: "/opt/ssl/{{ .Values.ssl.file.cert }}"
                   private_key:
-                    filename: "/opt/ssl/{{ .Values.ssl.path.key }}"
+                    filename: "/opt/ssl/{{ .Values.ssl.file.key }}"
 {{- end }}
 {{- if .Values.grafana.enabled }}
   - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
     name: listener_3000
     address:
       socket_address:
-        address: "::"
-        ipv4_compat: true
+        {{- include "envoy.bindAddress" . | nindent 8 }}
         port_value: 3000
     per_connection_buffer_limit_bytes: 32768  # 32 KiB
     filter_chains:

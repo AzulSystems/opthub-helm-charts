@@ -1,0 +1,105 @@
+# AI Tool Usage BOM
+# ------------------
+#
+# AI Tools Used:
+# - Anthropic Claude Haiku 5.5
+# - Anthropic Claude Sonnet 5.5
+#
+---
+# Deploys a new Namespace for the blob storage Pod
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: blobstorage-dev # Change this value if you want a different namespace name
+  labels:
+    name: blobstorage-dev # Change this value to match metadata.name
+---
+# Deploys a new Pod into the metadata.namespace Kubernetes namespace
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: blobstorage
+  name: blobstorage
+  namespace: blobstorage-dev # Change this value to match the namespace metadata.name
+spec:
+  containers:
+    - name: blobstorage
+      image: docker-mirror.azulsystems.com/pgsty/silo:RELEASE.2026-09-16T00-00-00Z
+      env:
+        - name: MINIO_ROOT_USER
+          value: "blobstorage"
+        - name: MINIO_ROOT_PASSWORD
+          value: "blobstorage123"
+      command:
+        - /usr/bin/silo
+      args:
+        - server
+        - /data
+        - --console-address
+        - ":9090"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      volumeMounts:
+        - mountPath: /data
+          # Corresponds to the `spec.volumes` Persistent Volume
+          name: localvolume
+  nodeSelector:
+    # Specify a node label associated to the Worker Node on
+    # which you want to deploy the pod.
+    #kubernetes.io/hostname: kubealpha.local
+    kubernetes.io/arch: amd64
+  volumes:
+    - name: localvolume
+      persistentVolumeClaim:
+        claimName: blobstorage-data
+
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blobstorage-data
+  namespace: blobstorage-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blobstorage
+  # This should match the namespace where your blob storage pod is running
+  namespace: blobstorage-dev
+spec:
+  selector:
+    app: blobstorage # This should match the label on your blob storage pod
+  ports:
+    - protocol: TCP
+      port: 9000 # The port you want to expose (S3 API port)
+      targetPort: 9000 # The port on the silo container
+      name: s3api
+    - protocol: TCP
+      port: 9090 # The port you want to expose for the console
+      targetPort: 9090 # The port on the silo container
+      name: console
+  # Change this to NodePort or LoadBalancer if you need external access
+  type: ClusterIP
+
+##############################################################################################
+##############################################################################################
+##############################################################################################
+# next steps
+# ----------
+# Create user blobstorage:blobstorage123
+# Create bucket 'opthub'
